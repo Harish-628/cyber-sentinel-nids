@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #07080c;
+    --foreground: #e2e8f0;
+    --card: #0d0f17;
+    --card-foreground: #e2e8f0;
+    --border: #1a1e2e;
+    --muted: #121522;
+    --muted-foreground: #828ba2;
+    --accent: #1e2438;
+    --accent-foreground: #ffffff;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+}
+
+body {
+  background-color: #07080c;
+  color: #cbd5e1;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(rgba(30, 41, 59, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(13, 15, 23, 0.8), rgba(7, 8, 12, 1));
+  background-size: 32px 32px, 100% 100%;
+}
+
+.font-mono-tech {
+  font-family: var(--font-mono);
+  font-feature-settings: "zero" 1, "tnum" 1;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #090a0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2438;
+  border-radius: 1px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2e3856;
+}
+
+/* Radar pulse animation */
+@keyframes radar-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.radar-live-alert {
+  animation: radar-pulse 2s infinite;
+}
+
+/* Scanline overlay subtle effect */
+.soc-scanline {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.2)
+  );
+  background-size: 100% 4px;
+}

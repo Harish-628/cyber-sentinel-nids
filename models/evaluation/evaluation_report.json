@@ -1,0 +1,128 @@
+{
+  "model_path": "models/trained/nids_model.joblib",
+  "total_test_samples": 10000,
+  "num_classes": 6,
+  "class_mapping": {
+    "0": "BENIGN",
+    "1": "Botnet",
+    "2": "Brute Force",
+    "3": "DoS",
+    "4": "PortScan",
+    "5": "Web Attack"
+  },
+  "overall_accuracy": 1.0,
+  "macro_precision": 1.0,
+  "macro_recall": 1.0,
+  "macro_f1": 1.0,
+  "weighted_precision": 1.0,
+  "weighted_recall": 1.0,
+  "weighted_f1": 1.0,
+  "benign_false_positive_rate_pct": 0.0,
+  "latency_metrics": {
+    "mean_latency_us": 7044.58,
+    "p95_latency_us": 7421.52,
+    "p99_latency_us": 7956.01,
+    "throughput_flows_per_sec": 142.0
+  },
+  "per_class_metrics": {
+    "BENIGN": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 6500.0
+    },
+    "Botnet": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 150.0
+    },
+    "Brute Force": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 350.0
+    },
+    "DoS": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 1500.0
+    },
+    "PortScan": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 1200.0
+    },
+    "Web Attack": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 300.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 10000.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 10000.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      6500,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      150,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      350,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      1500,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      1200,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      300
+    ]
+  ]
+}
