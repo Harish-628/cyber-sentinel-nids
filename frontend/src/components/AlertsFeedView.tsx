@@ -216,7 +216,9 @@ export const AlertsFeedView: React.FC<AlertsFeedViewProps> = ({
             </thead>
             <tbody className="divide-y divide-[#161a29]">
               {filteredAlerts.length > 0 ? (
-                filteredAlerts.map((alert) => {
+                Array.from(
+                  new Map(filteredAlerts.map((a) => [a.alert_id, a])).values()
+                ).map((alert, idx) => {
                   const isSelected = selectedAlert?.alert_id === alert.alert_id;
                   const sevStyle =
                     alert.severity === "CRITICAL"
@@ -234,7 +236,7 @@ export const AlertsFeedView: React.FC<AlertsFeedViewProps> = ({
 
                   return (
                     <tr
-                      key={alert.alert_id}
+                      key={`${alert.alert_id}-${idx}`}
                       onClick={() => onSelectAlert(alert)}
                       className={`cursor-pointer transition select-none ${
                         isSelected

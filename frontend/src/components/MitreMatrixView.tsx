@@ -265,8 +265,12 @@ export const MitreMatrixView: React.FC<MitreMatrixViewProps> = ({
               </thead>
               <tbody className="divide-y divide-[#181c2b]">
                 {matchedAlerts.length > 0 ? (
-                  matchedAlerts.slice(0, 6).map((a) => (
-                    <tr key={a.alert_id} className="hover:bg-[#121625] transition cursor-pointer" onClick={() => onSelectAlert(a)}>
+                  Array.from(
+                    new Map(matchedAlerts.map((x) => [x.alert_id, x])).values()
+                  )
+                    .slice(0, 6)
+                    .map((a, idx) => (
+                      <tr key={`${a.alert_id}-${idx}`} className="hover:bg-[#121625] transition cursor-pointer" onClick={() => onSelectAlert(a)}>
                       <td className="py-2 px-2.5 text-zinc-400 text-[10px]">
                         {a.timestamp.split("T")[1]?.slice(0, 8) || a.timestamp}
                       </td>

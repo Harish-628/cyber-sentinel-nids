@@ -40,7 +40,24 @@ export default function Home() {
       ]);
 
       if (m.status === "fulfilled") setMetrics(m.value);
-      if (a.status === "fulfilled") setAlerts(a.value);
+      if (a.status === "fulfilled") {
+        setAlerts((prev) => {
+          const map = new Map<string, SecurityAlert>();
+          // Index API alerts first
+          for (const item of a.value) {
+            map.set(item.alert_id, item);
+          }
+          // Merge in any alerts currently in state that might not be in API response yet
+          for (const item of prev) {
+            if (!map.has(item.alert_id)) {
+              map.set(item.alert_id, item);
+            }
+          }
+          return Array.from(map.values())
+            .sort((x, y) => new Date(y.timestamp).getTime() - new Date(x.timestamp).getTime())
+            .slice(0, 500);
+        });
+      }
       if (th.status === "fulfilled") setTrafficHistory(th.value);
       if (sim.status === "fulfilled") setSimulatorStatus(sim.value);
     } catch (e) {
@@ -73,13 +90,17 @@ export default function Home() {
           const msg = JSON.parse(event.data);
           if (msg.type === "NEW_ALERT") {
             const newAlert: SecurityAlert = msg.data;
-            setAlerts((prev) => [newAlert, ...prev.slice(0, 499)]);
+            setAlerts((prev) => {
+              const filtered = prev.filter((a) => a.alert_id !== newAlert.alert_id);
+              return [newAlert, ...filtered.slice(0, 499)];
+            });
             // Show toast for critical/high alerts
             if (newAlert.severity === "CRITICAL" || newAlert.severity === "HIGH") {
               setToastAlert(newAlert);
               setTimeout(() => setToastAlert(null), 4000);
             }
-            refreshData();
+            // Update metrics directly without full alert collision race
+            fetchOverviewMetrics().then(setMetrics).catch(() => {});
           } else if (msg.type === "ALERT_UPDATED") {
             const updated: SecurityAlert = msg.data;
             setAlerts((prev) =>

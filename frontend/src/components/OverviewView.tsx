@@ -365,20 +365,24 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </thead>
             <tbody className="divide-y divide-[#161a29]">
               {recentAlerts.length > 0 ? (
-                recentAlerts.slice(0, 5).map((alert) => {
-                  const sevStyle =
-                    alert.severity === "CRITICAL"
-                      ? "bg-red-950/80 text-red-300 border-red-700/80"
-                      : alert.severity === "HIGH"
-                      ? "bg-orange-950/80 text-orange-300 border-orange-700/80"
-                      : "bg-amber-950/80 text-amber-300 border-amber-700/80";
+                Array.from(
+                  new Map(recentAlerts.map((a) => [a.alert_id, a])).values()
+                )
+                  .slice(0, 5)
+                  .map((alert, idx) => {
+                    const sevStyle =
+                      alert.severity === "CRITICAL"
+                        ? "bg-red-950/80 text-red-300 border-red-700/80"
+                        : alert.severity === "HIGH"
+                        ? "bg-orange-950/80 text-orange-300 border-orange-700/80"
+                        : "bg-amber-950/80 text-amber-300 border-amber-700/80";
 
-                  return (
-                    <tr
-                      key={alert.alert_id}
-                      onClick={() => onSelectAlert(alert)}
-                      className="hover:bg-[#121522] cursor-pointer transition"
-                    >
+                    return (
+                      <tr
+                        key={`${alert.alert_id}-${idx}`}
+                        onClick={() => onSelectAlert(alert)}
+                        className="hover:bg-[#121522] cursor-pointer transition"
+                      >
                       <td className="py-2 px-2.5 text-zinc-400 text-[10px]">
                         {alert.timestamp.split("T")[1]?.slice(0, 8) || alert.timestamp}
                       </td>
