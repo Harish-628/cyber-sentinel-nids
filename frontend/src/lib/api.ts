@@ -82,3 +82,25 @@ export async function analyzeCustomFlow(payload: any): Promise<any> {
   if (!res.ok) throw new Error("Failed to analyze flow");
   return res.json();
 }
+
+export async function fetchTrafficMode(): Promise<any> {
+  const res = await fetch(`${API_BASE}/traffic/mode`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch traffic mode");
+  return res.json();
+}
+
+export async function setTrafficMode(mode: string, iface?: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/traffic/mode`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode, interface: iface }),
+  });
+  if (!res.ok) throw new Error("Failed to set traffic mode");
+  return res.json();
+}
+
+export async function fetchNetworkInterfaces(): Promise<any> {
+  const res = await fetch(`${API_BASE}/traffic/interfaces`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch network interfaces");
+  return res.json();
+}

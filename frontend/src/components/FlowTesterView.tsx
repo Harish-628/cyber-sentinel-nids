@@ -198,15 +198,17 @@ export const FlowTesterView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Top Banner */}
-      <div className="bg-[#0f111a] border border-[#1b1f2e] p-4 rounded-sm flex items-center justify-between">
+    <div className="space-y-4 font-mono-tech">
+      {/* Top Banner - Glassmorphic */}
+      <div className="glass-panel p-4 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-xl border border-white/10">
         <div>
-          <h2 className="text-sm font-bold font-mono-tech text-white uppercase tracking-wider flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-emerald-400" />
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.3)] flex items-center justify-center">
+              <Terminal className="w-4 h-4 text-emerald-400" />
+            </div>
             NIDS FLOW INSPECTOR & ADVERSARIAL TESTING LAB
           </h2>
-          <p className="text-[11px] font-mono-tech text-zinc-400 mt-0.5">
+          <p className="text-[10px] text-zinc-400 mt-1">
             CRAFT ARBITRARY TCP/IP FLOWS // TEST LIVE AI MODEL CLASSIFICATION & ALERT RESPONSE
           </p>
         </div>
@@ -215,113 +217,116 @@ export const FlowTesterView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left 1 Col: Scenario Presets */}
         <div className="space-y-3">
-          <div className="bg-[#0f111a] border border-[#1b1f2e] p-3 rounded-sm">
-            <h3 className="text-xs font-mono-tech font-bold text-zinc-300 uppercase tracking-wider mb-2 border-b border-[#1b1f2e] pb-1.5 flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
+          <div className="glass-panel p-4 rounded-xl border border-white/10 shadow-xl">
+            <h3 className="text-xs font-bold text-zinc-200 uppercase tracking-wider mb-3 border-b border-white/10 pb-2 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-400" />
               ATTACK SCENARIOS & BENCHMARKS
             </h3>
 
-            <div className="space-y-1.5">
-              {Object.entries(PRESETS).map(([key, item]) => (
-                <button
-                  key={key}
-                  onClick={() => handlePresetSelect(key)}
-                  className={`w-full text-left p-2.5 rounded-sm border text-xs font-mono-tech transition ${
-                    selectedPreset === key
-                      ? "bg-[#181d2f] border-red-500 text-white font-semibold"
-                      : "bg-[#090a0f] border-[#1b1f2e] text-zinc-400 hover:text-zinc-200 hover:bg-[#121520]"
-                  }`}
-                >
-                  <div className="text-white font-bold">{item.name}</div>
-                  <p className="text-[10px] text-zinc-500 mt-0.5 leading-snug">{item.desc}</p>
-                </button>
-              ))}
+            <div className="space-y-2">
+              {Object.entries(PRESETS).map(([key, item]) => {
+                const isSelected = selectedPreset === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handlePresetSelect(key)}
+                    className={`w-full text-left p-3 rounded-xl border text-xs transition-all duration-200 ${
+                      isSelected
+                        ? "bg-gradient-to-r from-red-500/20 to-red-950/30 border-red-500 text-white font-bold shadow-[0_0_15px_rgba(239,68,68,0.25)]"
+                        : "glass-panel-interactive border-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="text-white font-bold">{item.name}</div>
+                    <p className="text-[10px] text-zinc-400 mt-1 leading-snug">{item.desc}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Center & Right 2 Cols: Interactive Flow Form & Result */}
-        <div className="lg:col-span-2 space-y-3">
-          <div className="bg-[#0f111a] border border-[#1b1f2e] p-4 rounded-sm font-mono-tech">
-            <div className="flex items-center justify-between mb-3 border-b border-[#1b1f2e] pb-2">
-              <span className="text-xs font-bold text-zinc-200 uppercase">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="glass-panel p-5 rounded-xl border border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2.5">
+              <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
                 FLOW PARAMETERS (TCP/IP 5-TUPLE + CIC METRICS)
               </span>
               <button
                 onClick={() => setFormData(PRESETS[selectedPreset].payload)}
-                className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 transition"
+                className="text-[10px] text-zinc-400 hover:text-cyan-300 flex items-center gap-1.5 transition font-semibold"
               >
-                <RotateCcw className="w-3 h-3" /> RESET VALUES
+                <RotateCcw className="w-3.5 h-3.5" /> RESET VALUES
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 text-xs mb-5">
               <div>
-                <label className="text-zinc-500 block text-[10px] mb-1">SOURCE IP</label>
+                <label className="text-zinc-400 block text-[9px] uppercase tracking-wider font-semibold mb-1">SOURCE IP</label>
                 <input
                   type="text"
                   value={formData.src_ip}
                   onChange={(e) => handleInputChange("src_ip", e.target.value)}
-                  className="w-full bg-[#090a0f] border border-[#1b1f2e] px-2 py-1 text-cyan-400 rounded-sm focus:outline-none"
+                  className="w-full bg-[#080d1c]/80 border border-white/15 px-2.5 py-1.5 text-cyan-400 rounded-lg focus:outline-none focus:border-cyan-400 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="text-zinc-500 block text-[10px] mb-1">SOURCE PORT</label>
+                <label className="text-zinc-400 block text-[9px] uppercase tracking-wider font-semibold mb-1">SOURCE PORT</label>
                 <input
                   type="number"
                   value={formData.src_port}
                   onChange={(e) => handleInputChange("src_port", parseInt(e.target.value) || 0)}
-                  className="w-full bg-[#090a0f] border border-[#1b1f2e] px-2 py-1 text-zinc-200 rounded-sm focus:outline-none"
+                  className="w-full bg-[#080d1c]/80 border border-white/15 px-2.5 py-1.5 text-zinc-200 rounded-lg focus:outline-none focus:border-cyan-400 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="text-zinc-500 block text-[10px] mb-1">TARGET IP</label>
+                <label className="text-zinc-400 block text-[9px] uppercase tracking-wider font-semibold mb-1">TARGET IP</label>
                 <input
                   type="text"
                   value={formData.dst_ip}
                   onChange={(e) => handleInputChange("dst_ip", e.target.value)}
-                  className="w-full bg-[#090a0f] border border-[#1b1f2e] px-2 py-1 text-orange-400 rounded-sm focus:outline-none"
+                  className="w-full bg-[#080d1c]/80 border border-white/15 px-2.5 py-1.5 text-orange-400 rounded-lg focus:outline-none focus:border-orange-400 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="text-zinc-500 block text-[10px] mb-1">TARGET PORT</label>
+                <label className="text-zinc-400 block text-[9px] uppercase tracking-wider font-semibold mb-1">TARGET PORT</label>
                 <input
                   type="number"
                   value={formData.dst_port}
                   onChange={(e) => handleInputChange("dst_port", parseInt(e.target.value) || 0)}
-                  className="w-full bg-[#090a0f] border border-[#1b1f2e] px-2 py-1 text-zinc-200 rounded-sm focus:outline-none"
+                  className="w-full bg-[#080d1c]/80 border border-white/15 px-2.5 py-1.5 text-zinc-200 rounded-lg focus:outline-none focus:border-cyan-400 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="text-zinc-500 block text-[10px] mb-1">FLOW DURATION (µs)</label>
+                <label className="text-zinc-400 block text-[9px] uppercase tracking-wider font-semibold mb-1">FLOW DURATION (µs)</label>
                 <input
                   type="number"
                   value={formData.flow_duration}
                   onChange={(e) => handleInputChange("flow_duration", parseFloat(e.target.value) || 0)}
-                  className="w-full bg-[#090a0f] border border-[#1b1f2e] px-2 py-1 text-zinc-200 rounded-sm focus:outline-none"
+                  className="w-full bg-[#080d1c]/80 border border-white/15 px-2.5 py-1.5 text-zinc-200 rounded-lg focus:outline-none focus:border-cyan-400 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="text-zinc-500 block text-[10px] mb-1">TOTAL FWD PACKETS</label>
+                <label className="text-zinc-400 block text-[9px] uppercase tracking-wider font-semibold mb-1">TOTAL FWD PACKETS</label>
                 <input
                   type="number"
                   value={formData.tot_fwd_pkts}
                   onChange={(e) => handleInputChange("tot_fwd_pkts", parseInt(e.target.value) || 0)}
-                  className="w-full bg-[#090a0f] border border-[#1b1f2e] px-2 py-1 text-zinc-200 rounded-sm focus:outline-none"
+                  className="w-full bg-[#080d1c]/80 border border-white/15 px-2.5 py-1.5 text-zinc-200 rounded-lg focus:outline-none focus:border-cyan-400 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="text-zinc-500 block text-[10px] mb-1">SYN FLAG</label>
+                <label className="text-zinc-400 block text-[9px] uppercase tracking-wider font-semibold mb-1">SYN FLAG</label>
                 <select
                   value={formData.syn_flag_count}
                   onChange={(e) => handleInputChange("syn_flag_count", parseInt(e.target.value))}
-                  className="w-full bg-[#090a0f] border border-[#1b1f2e] px-2 py-1 text-zinc-200 rounded-sm focus:outline-none"
+                  className="w-full bg-[#080d1c]/80 border border-white/15 px-2.5 py-1.5 text-zinc-200 rounded-lg focus:outline-none focus:border-cyan-400 font-semibold cursor-pointer"
                 >
                   <option value={0}>0 (OFF)</option>
                   <option value={1}>1 (SET)</option>
@@ -329,11 +334,11 @@ export const FlowTesterView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-zinc-500 block text-[10px] mb-1">ACK FLAG</label>
+                <label className="text-zinc-400 block text-[9px] uppercase tracking-wider font-semibold mb-1">ACK FLAG</label>
                 <select
                   value={formData.ack_flag_count}
                   onChange={(e) => handleInputChange("ack_flag_count", parseInt(e.target.value))}
-                  className="w-full bg-[#090a0f] border border-[#1b1f2e] px-2 py-1 text-zinc-200 rounded-sm focus:outline-none"
+                  className="w-full bg-[#080d1c]/80 border border-white/15 px-2.5 py-1.5 text-zinc-200 rounded-lg focus:outline-none focus:border-cyan-400 font-semibold cursor-pointer"
                 >
                   <option value={0}>0 (OFF)</option>
                   <option value={1}>1 (SET)</option>
@@ -344,35 +349,35 @@ export const FlowTesterView: React.FC = () => {
             <button
               onClick={handleRunInference}
               disabled={isRunning}
-              className="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs font-mono-tech tracking-wider uppercase rounded-sm flex items-center justify-center gap-2 transition shadow-lg shadow-red-950/40"
+              className="w-full py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2.5 transition-all shadow-[0_0_20px_rgba(239,68,68,0.4)] active:scale-[0.99] disabled:opacity-50"
             >
               {isRunning ? (
                 <>
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   EVALUATING WITH AI MODEL...
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <Play className="w-4 h-4 fill-current" />
                   EXECUTE NIDS REAL-TIME INFERENCE
                 </>
               )}
             </button>
           </div>
 
-          {/* Inference Result Output Box */}
+          {/* Inference Result Output Box - Glassmorphic */}
           {result && (
-            <div className="bg-[#0f111a] border border-[#1b1f2e] p-4 rounded-sm font-mono-tech">
-              <h3 className="text-xs font-bold text-zinc-200 uppercase mb-3 flex items-center gap-2 border-b border-[#1b1f2e] pb-2">
+            <div className="glass-panel p-5 rounded-xl border border-white/10 shadow-2xl space-y-4">
+              <h3 className="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-2.5">
                 <Cpu className="w-4 h-4 text-cyan-400" />
                 MODEL INFERENCE VERDICT & SOC ALERT OUTPUT
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                <div className="bg-[#090a0f] border border-[#1b1f2e] p-3 rounded-sm">
-                  <span className="text-zinc-500 text-[10px] block">CLASSIFICATION VERDICT</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                <div className="glass-panel rounded-xl p-3.5 border border-white/10 shadow-md">
+                  <span className="text-zinc-400 text-[10px] block uppercase tracking-wider font-semibold">CLASSIFICATION VERDICT</span>
                   <span
-                    className={`text-lg font-bold ${
+                    className={`text-lg font-bold mt-0.5 block ${
                       result.classification === "BENIGN" ? "text-emerald-400" : "text-red-400"
                     }`}
                   >
@@ -380,17 +385,17 @@ export const FlowTesterView: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="bg-[#090a0f] border border-[#1b1f2e] p-3 rounded-sm">
-                  <span className="text-zinc-500 text-[10px] block">CONFIDENCE SCORE</span>
-                  <span className="text-lg font-bold text-emerald-400">
+                <div className="glass-panel rounded-xl p-3.5 border border-white/10 shadow-md">
+                  <span className="text-zinc-400 text-[10px] block uppercase tracking-wider font-semibold">CONFIDENCE SCORE</span>
+                  <span className="text-lg font-bold text-emerald-400 mt-0.5 block">
                     {(result.confidence_score * 100).toFixed(2)}%
                   </span>
                 </div>
 
-                <div className="bg-[#090a0f] border border-[#1b1f2e] p-3 rounded-sm">
-                  <span className="text-zinc-500 text-[10px] block">SOC SEVERITY</span>
+                <div className="glass-panel rounded-xl p-3.5 border border-white/10 shadow-md">
+                  <span className="text-zinc-400 text-[10px] block uppercase tracking-wider font-semibold">SOC SEVERITY</span>
                   <span
-                    className={`text-lg font-bold ${
+                    className={`text-lg font-bold mt-0.5 block ${
                       result.severity === "CRITICAL"
                         ? "text-red-400"
                         : result.severity === "HIGH"
@@ -406,16 +411,16 @@ export const FlowTesterView: React.FC = () => {
               </div>
 
               {result.alert && (
-                <div className="bg-[#090a0f] border border-red-800/80 p-3 rounded-sm space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-red-400 font-bold flex items-center gap-1.5">
-                      <ShieldAlert className="w-4 h-4" /> GENERATED ALERT ID: {result.alert.alert_id}
+                <div className="glass-panel border border-red-500/40 bg-red-950/20 p-4 rounded-xl space-y-2.5 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+                  <div className="flex flex-wrap items-center justify-between text-xs gap-2">
+                    <span className="text-red-300 font-bold flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-red-400" /> GENERATED ALERT ID: {result.alert.alert_id}
                     </span>
                     <span className="text-zinc-400 text-[10px]">{result.alert.timestamp}</span>
                   </div>
                   <p className="text-xs text-amber-300 font-semibold">{result.alert.mitre_tactic}</p>
-                  <p className="text-[11px] text-zinc-300">{result.alert.description}</p>
-                  <div className="text-[11px] text-emerald-400 border-t border-zinc-800 pt-1.5 mt-2">
+                  <p className="text-[11px] text-zinc-300 leading-relaxed">{result.alert.description}</p>
+                  <div className="text-[11px] text-emerald-400 border-t border-white/10 pt-2 mt-2">
                     <span className="font-bold">RECOMMENDED ACTION:</span> {result.alert.mitigation}
                   </div>
                 </div>

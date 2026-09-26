@@ -69,3 +69,18 @@ export interface SimulatorStatus {
   interval_seconds: number;
   attack_probability: number;
 }
+
+export interface NetworkInterface {
+  name: string;
+  state: string;
+  type: "WIRELESS" | "ETHERNET" | "LOOPBACK" | "VIRTUAL";
+  is_active: boolean;
+}
+
+export interface TrafficModeInfo {
+  mode: "SIMULATOR" | "LIVE_SNIFFER";
+  active_interface: string;
+  simulator_running: boolean;
+  flow_interval: number;
+  attack_probability: number;
+}

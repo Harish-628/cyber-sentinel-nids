@@ -26,6 +26,9 @@ class TrafficSimulator:
         self.flow_interval: float = 0.5  # ~2 flows per second
         self.attack_probability: float = 0.20  # 20% malicious by default
         self.rng = np.random.default_rng(42)
+        self.mode: str = "SIMULATOR"  # 'SIMULATOR' or 'LIVE_SNIFFER'
+        self.active_interface: str = "wlp44s0"
+        self.live_packets_count: int = 0
 
     def generate_random_ip(self, subnet: str = "internal") -> str:
         """Generate realistic internal or external IP."""
@@ -258,6 +261,11 @@ class TrafficSimulator:
     async def _simulation_loop(self):
         """Asynchronous worker that pushes simulated flows into inference engine and alert store."""
         while self.is_running:
+            if self.mode == "LIVE_SNIFFER":
+                # In real network sniffer mode, pause synthetic background generation
+                await asyncio.sleep(1.0)
+                continue
+
             try:
                 payload = self.create_simulated_payload()
                 result = engine.analyze_flow(payload)

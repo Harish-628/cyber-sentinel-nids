@@ -3,11 +3,20 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   fetchAlerts,
+  fetchNetworkInterfaces,
   fetchOverviewMetrics,
   fetchSimulatorStatus,
   fetchTrafficHistory,
+  fetchTrafficMode,
 } from "@/lib/api";
-import { OverviewMetrics, SecurityAlert, SimulatorStatus, TrafficPoint } from "@/lib/types";
+import {
+  NetworkInterface,
+  OverviewMetrics,
+  SecurityAlert,
+  SimulatorStatus,
+  TrafficModeInfo,
+  TrafficPoint,
+} from "@/lib/types";
 import { AlertsFeedView } from "@/components/AlertsFeedView";
 import { FlowTesterView } from "@/components/FlowTesterView";
 import { MitreMatrixView } from "@/components/MitreMatrixView";
@@ -24,6 +33,8 @@ export default function Home() {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [trafficHistory, setTrafficHistory] = useState<TrafficPoint[]>([]);
   const [simulatorStatus, setSimulatorStatus] = useState<SimulatorStatus | null>(null);
+  const [trafficMode, setTrafficMode] = useState<TrafficModeInfo | null>(null);
+  const [interfaces, setInterfaces] = useState<NetworkInterface[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<SecurityAlert | null>(null);
   const [isWsConnected, setIsWsConnected] = useState<boolean>(false);
   const [toastAlert, setToastAlert] = useState<SecurityAlert | null>(null);
@@ -32,14 +43,18 @@ export default function Home() {
   // Sync state from REST API
   const refreshData = useCallback(async () => {
     try {
-      const [m, a, th, sim] = await Promise.allSettled([
+      const [m, a, th, sim, tm, ifaces] = await Promise.allSettled([
         fetchOverviewMetrics(),
         fetchAlerts(),
         fetchTrafficHistory(),
         fetchSimulatorStatus(),
+        fetchTrafficMode(),
+        fetchNetworkInterfaces(),
       ]);
 
       if (m.status === "fulfilled") setMetrics(m.value);
+      if (tm.status === "fulfilled") setTrafficMode(tm.value);
+      if (ifaces.status === "fulfilled") setInterfaces(ifaces.value?.interfaces || []);
       if (a.status === "fulfilled") {
         setAlerts((prev) => {
           const map = new Map<string, SecurityAlert>();
@@ -160,11 +175,16 @@ export default function Home() {
       <SOCHeader
         metrics={metrics}
         simulatorStatus={simulatorStatus}
+        trafficMode={trafficMode}
+        interfaces={interfaces}
         isWsConnected={isWsConnected}
         timeRange={timeRange}
         onTimeRangeChange={setTimeRange}
         onRefresh={refreshData}
         onAttackInjected={(type) => {
+          refreshData();
+        }}
+        onModeChanged={() => {
           refreshData();
         }}
       />

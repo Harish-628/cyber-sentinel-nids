@@ -70,14 +70,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-60 border-r border-[#1a1e2e] bg-[#090b10] flex flex-col justify-between select-none">
+    <aside className="w-64 glass-panel border-r border-white/[0.08] flex flex-col justify-between select-none z-20">
       <div>
         {/* Navigation Group */}
-        <div className="p-2.5">
+        <div className="p-3">
           <p className="text-[9px] font-mono-tech tracking-wider text-zinc-500 uppercase px-2.5 py-1">
             SOC CONSOLE VIEWS
           </p>
-          <nav className="space-y-0.5 mt-1">
+          <nav className="space-y-1 mt-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
@@ -85,20 +85,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => onTabChange(item.id)}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 text-[11px] font-mono-tech rounded-[2px] transition ${
+                  className={`w-full flex items-center justify-between px-3 py-2 text-[11px] font-mono-tech rounded-[3px] transition ${
                     isActive
-                      ? "bg-[#161a29] text-white border-l-2 border-red-500 font-bold shadow-xs"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-[#10131d] border-l-2 border-transparent"
+                      ? "bg-cyan-950/50 text-cyan-100 border-l-2 border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.2)] inset-shadow-sm"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.05] border-l-2 border-transparent"
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? "text-red-400" : "text-zinc-500"}`} />
+                  <div className="flex items-center gap-2.5">
+                    <Icon className={`w-4 h-4 ${isActive ? "text-cyan-400" : "text-zinc-500"}`} />
                     <span>{item.label}</span>
                   </div>
                   {item.badge !== null && (
                     <span
                       className={`text-[9px] px-1.5 py-0.2 border rounded-[2px] ${
-                        item.badgeColor || "bg-zinc-800 text-zinc-300 border-zinc-700"
+                        item.badgeColor || "bg-white/[0.06] text-zinc-300 border-white/[0.1]"
                       }`}
                     >
                       {item.badge}
@@ -111,46 +111,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Live Ingestion Interfaces Widget */}
-        <div className="px-2.5 pt-1">
+        <div className="px-3 pt-1">
           <p className="text-[9px] font-mono-tech tracking-wider text-zinc-500 uppercase px-2.5 py-1">
-            INGESTION INTERFACES
+            PACKET INGESTION ENGINE
           </p>
-          <div className="bg-[#0d0f17] border border-[#1a1e2e] p-2.5 rounded-[2px] space-y-1.5 mt-1">
+          <div className="glass-panel p-2.5 rounded-[3px] space-y-2 mt-1 border border-white/[0.08]">
             <div className="flex items-center justify-between text-[10px] font-mono-tech">
               <span className="text-zinc-400 flex items-center gap-1.5">
-                <Radio className="w-2.5 h-2.5 text-emerald-400" /> SPAN / TAP
+                <Radio className="w-3 h-3 text-cyan-400" /> Active Adapter
               </span>
-              <span className="text-emerald-400 font-bold">1,000 Mbps</span>
+              <span className="text-cyan-300 font-bold bg-cyan-950/60 px-1.5 py-0.2 rounded border border-cyan-500/40">
+                wlp44s0 (Wi-Fi)
+              </span>
             </div>
             <div className="flex items-center justify-between text-[10px] font-mono-tech">
               <span className="text-zinc-400 flex items-center gap-1.5">
-                <Database className="w-2.5 h-2.5 text-blue-400" /> Flow Collector
+                <Database className="w-3 h-3 text-emerald-400" /> Flow Extraction
               </span>
-              <span className="text-zinc-300">41 Feats</span>
+              <span className="text-emerald-300 font-bold">41 Metrics</span>
             </div>
             <div className="flex items-center justify-between text-[10px] font-mono-tech">
               <span className="text-zinc-400 flex items-center gap-1.5">
-                <Server className="w-2.5 h-2.5 text-purple-400" /> ML Classifier
+                <Server className="w-3 h-3 text-purple-400" /> AI Classification
               </span>
-              <span className="text-emerald-400 font-bold">ONLINE</span>
+              <span className="text-emerald-400 font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> ONLINE
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Model Spec Mini-Panel at Footer */}
-      <div className="p-2.5 border-t border-[#1a1e2e] bg-[#0d0f17]">
-        <div className="text-[9px] font-mono-tech text-zinc-500 mb-1.5 uppercase tracking-wider flex items-center justify-between">
-          <span>AI SENSOR TELEMETRY</span>
-          <span className="text-emerald-400 text-[8px] font-bold">PASS</span>
+      <div className="p-3 border-t border-white/[0.08] bg-black/40">
+        <div className="text-[9px] font-mono-tech text-zinc-500 mb-2 uppercase tracking-wider flex items-center justify-between">
+          <span className="flex items-center gap-1 text-zinc-400">
+            <Cpu className="w-3 h-3 text-cyan-400" /> AI SENSOR TELEMETRY
+          </span>
+          <span className="text-emerald-400 text-[8px] font-bold px-1 py-0.2 bg-emerald-950/80 border border-emerald-500/40 rounded">
+            PASS
+          </span>
         </div>
-        <div className="space-y-1 text-[10px] font-mono-tech">
+        <div className="space-y-1.5 text-[10px] font-mono-tech">
           <div className="flex justify-between">
             <span className="text-zinc-500">Architecture:</span>
-            <span className="text-zinc-200">Balanced RF (100)</span>
+            <span className="text-zinc-200 font-medium">Random Forest (100)</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-zinc-500">Accuracy:</span>
+            <span className="text-zinc-500">Benchmark Acc:</span>
             <span className="text-emerald-400 font-bold">100.00%</span>
           </div>
           <div className="flex justify-between">
