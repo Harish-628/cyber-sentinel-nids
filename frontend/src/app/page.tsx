@@ -56,22 +56,7 @@ export default function Home() {
       if (tm.status === "fulfilled") setTrafficMode(tm.value);
       if (ifaces.status === "fulfilled") setInterfaces(ifaces.value?.interfaces || []);
       if (a.status === "fulfilled") {
-        setAlerts((prev) => {
-          const map = new Map<string, SecurityAlert>();
-          // Index API alerts first
-          for (const item of a.value) {
-            map.set(item.alert_id, item);
-          }
-          // Merge in any alerts currently in state that might not be in API response yet
-          for (const item of prev) {
-            if (!map.has(item.alert_id)) {
-              map.set(item.alert_id, item);
-            }
-          }
-          return Array.from(map.values())
-            .sort((x, y) => new Date(y.timestamp).getTime() - new Date(x.timestamp).getTime())
-            .slice(0, 500);
-        });
+        setAlerts(a.value || []);
       }
       if (th.status === "fulfilled") setTrafficHistory(th.value);
       if (sim.status === "fulfilled") setSimulatorStatus(sim.value);
@@ -110,20 +95,7 @@ export default function Home() {
               setTrafficHistory((prev) => [...prev.slice(-59), data.traffic_point]);
             }
             if (data.alerts && Array.isArray(data.alerts)) {
-              setAlerts((prev) => {
-                const map = new Map<string, SecurityAlert>();
-                for (const item of data.alerts) {
-                  map.set(item.alert_id, item);
-                }
-                for (const item of prev) {
-                  if (!map.has(item.alert_id)) {
-                    map.set(item.alert_id, item);
-                  }
-                }
-                return Array.from(map.values())
-                  .sort((x, y) => new Date(y.timestamp).getTime() - new Date(x.timestamp).getTime())
-                  .slice(0, 500);
-              });
+              setAlerts(data.alerts);
             }
           } else if (payload.type === "NEW_ALERT") {
             const newAlert: SecurityAlert | undefined = payload.data || payload.alert;
@@ -137,6 +109,11 @@ export default function Home() {
                 setTimeout(() => setToastAlert(null), 6000);
               }
             }
+          } else if (payload.type === "ALERTS_CLEARED") {
+            setAlerts([]);
+            setSelectedAlert(null);
+          } else if (payload.type === "METRICS_UPDATED") {
+            if (payload.data) setMetrics(payload.data);
           }
         } catch (err) {
           console.error("Failed to parse websocket message", err);

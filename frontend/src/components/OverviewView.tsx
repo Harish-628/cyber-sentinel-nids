@@ -105,8 +105,18 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         <div className="glass-panel-interactive p-5 rounded-2xl relative overflow-hidden group border border-white/90 bg-white/75 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 mb-2">
             <span className="text-[10px] tracking-wider uppercase font-bold text-slate-500">THREAT POSTURE DEFCON</span>
-            <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 shadow-xs group-hover:scale-105 transition">
-              <Flame className="w-4 h-4" />
+            <div
+              className={`p-2 rounded-xl border shadow-xs group-hover:scale-105 transition ${
+                threatLevel === "CRITICAL"
+                  ? "bg-rose-50 border-rose-200 text-rose-600"
+                  : threatLevel === "HIGH"
+                  ? "bg-orange-50 border-orange-200 text-orange-600"
+                  : threatLevel === "ELEVATED"
+                  ? "bg-amber-50 border-amber-200 text-amber-600"
+                  : "bg-emerald-50 border-emerald-200 text-emerald-600"
+              }`}
+            >
+              {threatLevel === "NORMAL" ? <Shield className="w-4 h-4" /> : <Flame className="w-4 h-4" />}
             </div>
           </div>
           <div className="flex items-baseline justify-between">

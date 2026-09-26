@@ -165,40 +165,77 @@ class TrafficSimulator:
         delta_bytes, delta_pkts, duration_sec, bps = self.read_interface_dev_stats()
         self.live_packets_count += delta_pkts
 
-        fwd_pkts = max(1, int(delta_pkts * 0.55))
-        bwd_pkts = max(1, int(delta_pkts * 0.45))
-        fwd_bytes = max(50.0, delta_bytes * 0.55)
-        bwd_bytes = max(50.0, delta_bytes * 0.45)
-        mean_pkt_len = delta_bytes / max(1, delta_pkts)
+        duration_us = max(20000.0, duration_sec * 1_000_000.0)
 
-        return NetworkFlowPayload(
-            src_ip=src_ip,
-            dst_ip=dst_ip,
-            src_port=src_port,
-            dst_port=dst_port,
-            protocol=proto,
-            flow_duration=duration_sec * 1_000_000.0,
-            tot_fwd_pkts=fwd_pkts,
-            tot_bwd_pkts=bwd_pkts,
-            tot_len_fwd_pkts=fwd_bytes,
-            tot_len_bwd_pkts=bwd_bytes,
-            fwd_pkt_len_max=min(1500.0, mean_pkt_len * 1.5),
-            fwd_pkt_len_min=min(64.0, mean_pkt_len * 0.6),
-            fwd_pkt_len_mean=mean_pkt_len,
-            bwd_pkt_len_max=min(1500.0, mean_pkt_len * 1.4),
-            bwd_pkt_len_min=min(64.0, mean_pkt_len * 0.6),
-            bwd_pkt_len_mean=mean_pkt_len,
-            flow_bytes_s=bps,
-            flow_pkts_s=delta_pkts / duration_sec,
-            flow_iat_mean=(duration_sec * 1_000_000.0) / max(1, delta_pkts),
-            syn_flag_count=1 if dst_port in [80, 443, 22] and self.rng.random() < 0.2 else 0,
-            ack_flag_count=1,
-            psh_flag_count=1 if delta_bytes > 500 else 0,
-            init_win_bytes_forward=65535 if proto == "TCP" else 0,
-            init_win_bytes_backward=65535 if proto == "TCP" else 0,
-            act_data_pkt_fwd=max(1, fwd_pkts - 1),
-            avg_pkt_size=mean_pkt_len,
-        )
+        if proto == "UDP" or dst_port == 53:
+            fwd_pkts = int(self.rng.integers(1, 4))
+            bwd_pkts = int(self.rng.integers(1, 4))
+            fwd_len_mean = float(self.rng.uniform(60.0, 140.0))
+            bwd_len_mean = float(self.rng.uniform(80.0, 200.0))
+            tot_bytes = (fwd_pkts * fwd_len_mean) + (bwd_pkts * bwd_len_mean)
+            return NetworkFlowPayload(
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                src_port=src_port,
+                dst_port=dst_port,
+                protocol="UDP",
+                flow_duration=duration_us,
+                tot_fwd_pkts=fwd_pkts,
+                tot_bwd_pkts=bwd_pkts,
+                tot_len_fwd_pkts=fwd_pkts * fwd_len_mean,
+                tot_len_bwd_pkts=bwd_pkts * bwd_len_mean,
+                fwd_pkt_len_max=min(512.0, fwd_len_mean * 1.5),
+                fwd_pkt_len_min=40.0,
+                fwd_pkt_len_mean=fwd_len_mean,
+                bwd_pkt_len_max=min(512.0, bwd_len_mean * 1.5),
+                bwd_pkt_len_min=40.0,
+                bwd_pkt_len_mean=bwd_len_mean,
+                flow_bytes_s=max(bps, tot_bytes / max(0.001, duration_sec)),
+                flow_pkts_s=(fwd_pkts + bwd_pkts) / max(0.001, duration_sec),
+                flow_iat_mean=duration_us / max(1, fwd_pkts + bwd_pkts - 1),
+                syn_flag_count=0,
+                ack_flag_count=0,
+                psh_flag_count=0,
+                init_win_bytes_forward=0,
+                init_win_bytes_backward=0,
+                act_data_pkt_fwd=max(1, fwd_pkts - 1),
+                avg_pkt_size=tot_bytes / max(1, fwd_pkts + bwd_pkts),
+            )
+        else:
+            # TCP Flow (HTTP, HTTPS, SSH, TLS)
+            fwd_pkts = int(self.rng.integers(4, 15))
+            bwd_pkts = int(self.rng.integers(4, 20))
+            fwd_len_mean = float(self.rng.uniform(120.0, 350.0))
+            bwd_len_mean = float(self.rng.uniform(250.0, 650.0))
+            tot_bytes = (fwd_pkts * fwd_len_mean) + (bwd_pkts * bwd_len_mean)
+            return NetworkFlowPayload(
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                src_port=src_port,
+                dst_port=dst_port,
+                protocol="TCP",
+                flow_duration=duration_us,
+                tot_fwd_pkts=fwd_pkts,
+                tot_bwd_pkts=bwd_pkts,
+                tot_len_fwd_pkts=fwd_pkts * fwd_len_mean,
+                tot_len_bwd_pkts=bwd_pkts * bwd_len_mean,
+                fwd_pkt_len_max=min(1460.0, fwd_len_mean * 1.5),
+                fwd_pkt_len_min=40.0,
+                fwd_pkt_len_mean=fwd_len_mean,
+                bwd_pkt_len_max=min(1460.0, bwd_len_mean * 1.4),
+                bwd_pkt_len_min=40.0,
+                bwd_pkt_len_mean=bwd_len_mean,
+                flow_bytes_s=max(bps, tot_bytes / max(0.001, duration_sec)),
+                flow_pkts_s=(fwd_pkts + bwd_pkts) / max(0.001, duration_sec),
+                flow_iat_mean=duration_us / max(1, fwd_pkts + bwd_pkts - 1),
+                syn_flag_count=0,
+                ack_flag_count=1,
+                psh_flag_count=int(self.rng.choice([0, 1], p=[0.7, 0.3])),
+                init_win_bytes_forward=int(self.rng.choice([8192, 29200, 65535])),
+                init_win_bytes_backward=int(self.rng.choice([8192, 29200, 65535])),
+                act_data_pkt_fwd=max(1, fwd_pkts - 2),
+                avg_pkt_size=tot_bytes / max(1, fwd_pkts + bwd_pkts),
+            )
 
     def generate_random_ip(self, subnet: str = "internal") -> str:
         """Generate realistic internal or external IP for simulation mode."""

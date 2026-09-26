@@ -37,17 +37,11 @@ async def lifespan(app: FastAPI):
     # 2. Seed initial baseline flows (simulate initial normal traffic so dashboard has immediate data)
     console.print("[dim]Pre-seeding baseline flows for SOC analytics...[/dim]")
     for _ in range(25):
-        benign_flow = bg_simulator.create_simulated_payload(attack_type="BENIGN")
-        res = engine.analyze_flow(benign_flow)
         await bg_simulator.inject_attack("BENIGN")
 
-    # Seed 3 initial alerts for realistic SOC demonstration
-    for atk in ["PortScan", "DoS", "Brute Force"]:
-        await bg_simulator.inject_attack(atk)
-
-    # 3. Start background simulator automatically (1 flow every 0.8s)
-    bg_simulator.start(interval=0.8, attack_prob=0.18)
-    console.print("[bold green]✓ Background live traffic simulator active (~1.2 flows/sec)[/bold green]")
+    # 3. Start background sniffer/worker (0 attack probability by default for genuine network activity)
+    bg_simulator.start(interval=0.8, attack_prob=0.0)
+    console.print("[bold green]✓ Background live host network telemetry active (~1.2 flows/sec)[/bold green]")
 
     yield
 

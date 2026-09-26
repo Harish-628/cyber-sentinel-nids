@@ -22,8 +22,9 @@ import {
   Terminal,
   X,
   Zap,
+  Trash2,
 } from "lucide-react";
-import { updateAlertStatus } from "@/lib/api";
+import { clearAllAlerts, updateAlertStatus } from "@/lib/api";
 import { AlertStatus, SecurityAlert } from "@/lib/types";
 
 interface AlertsFeedViewProps {
@@ -55,6 +56,20 @@ export const AlertsFeedView: React.FC<AlertsFeedViewProps> = ({
       console.error("Failed to update alert status", e);
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const [isClearing, setIsClearing] = useState(false);
+  const handleClearAll = async () => {
+    if (!window.confirm("Are you sure you want to clear all alerts and reset baseline?")) return;
+    setIsClearing(true);
+    try {
+      await clearAllAlerts();
+      onAlertStatusUpdated();
+    } catch (e) {
+      console.error("Failed to clear all alerts", e);
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -199,7 +214,15 @@ export const AlertsFeedView: React.FC<AlertsFeedViewProps> = ({
         </div>
 
         {/* Export & Counter */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleClearAll}
+            disabled={isClearing || alerts.length === 0}
+            className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 hover:border-rose-300 rounded-xl transition active:scale-95 disabled:opacity-40"
+            title="Clear all alerts"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> CLEAR ALL
+          </button>
           <button
             onClick={exportToCSV}
             className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-500/20 transition active:scale-95"

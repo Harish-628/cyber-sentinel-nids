@@ -22,8 +22,9 @@ import {
   Copy,
   Check,
   Zap,
+  RotateCcw,
 } from "lucide-react";
-import { injectAttack, setTrafficMode as apiSetTrafficMode, startSimulator, stopSimulator } from "@/lib/api";
+import { clearAllAlerts, injectAttack, setTrafficMode as apiSetTrafficMode, startSimulator, stopSimulator } from "@/lib/api";
 import { NetworkInterface, OverviewMetrics, SimulatorStatus, TrafficModeInfo } from "@/lib/types";
 
 interface SOCHeaderProps {
@@ -98,6 +99,19 @@ export const SOCHeader: React.FC<SOCHeaderProps> = ({
       console.error("Failed to inject attack", e);
     } finally {
       setIsInjecting(false);
+    }
+  };
+
+  const [isClearing, setIsClearing] = useState(false);
+  const handleClearAlerts = async () => {
+    setIsClearing(true);
+    try {
+      await clearAllAlerts();
+      onRefresh();
+    } catch (e) {
+      console.error("Failed to clear alerts", e);
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -345,6 +359,17 @@ export const SOCHeader: React.FC<SOCHeaderProps> = ({
             </div>
           )}
         </div>
+
+        {/* Clear / Reset Alerts Button */}
+        <button
+          onClick={handleClearAlerts}
+          disabled={isClearing}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono-tech font-bold bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 hover:border-rose-300 rounded-xl shadow-xs transition"
+          title="Reset alert log and threat baseline"
+        >
+          <RotateCcw className={`w-3 h-3 ${isClearing ? "animate-spin text-rose-500" : ""}`} />
+          <span>RESET ALERTS</span>
+        </button>
 
         {/* Live Traffic Simulator Play/Pause */}
         <button

@@ -149,27 +149,42 @@ class AlertStore:
             return alert
         return None
 
+    def clear_all(self):
+        """Clear all stored alerts and flows (reset baseline)."""
+        self.alerts.clear()
+        self.alerts_by_id.clear()
+        self.flows.clear()
+        self.total_flows = 0
+        self.total_attacks = 0
+        self.benign_flows = 0
+        self.severity_counts = {"CRITICAL": 0, "HIGH": 0, "SUSPICIOUS": 0, "NORMAL": 0}
+        self.attack_distribution.clear()
+        self.time_series_history.clear()
+
     def get_overview_metrics(self) -> OverviewMetrics:
         """Compute SOC overview KPI stats and Threat Level Index."""
         # Active alerts: those with status 'NEW' or 'INVESTIGATING'
         active_alerts = sum(1 for a in self.alerts if a.status in {"NEW", "INVESTIGATING"})
         
         # Calculate dynamic Threat Index (0 - 100)
-        # Based on proportion of critical/high attacks in recent traffic window
-        recent_flows = list(self.flows)[-100:] if self.flows else []
+        # Driven by the actual attack proportion in the rolling traffic window
+        recent_flows = list(self.flows)[-60:] if self.flows else []
         recent_attacks = sum(1 for f in recent_flows if f.is_malicious)
         attack_ratio = (recent_attacks / len(recent_flows)) if recent_flows else 0.0
         
-        threat_index = min(100.0, round(attack_ratio * 120.0 + (active_alerts * 2.5), 1))
-        
-        if threat_index >= 75.0:
-            threat_level = "CRITICAL"
-        elif threat_index >= 45.0:
-            threat_level = "HIGH"
-        elif threat_index >= 20.0:
-            threat_level = "ELEVATED"
-        else:
+        if attack_ratio == 0.0:
+            threat_index = 0.0
             threat_level = "NORMAL"
+        else:
+            threat_index = min(100.0, round(attack_ratio * 75.0 + min(25.0, active_alerts * 2.5), 1))
+            if threat_index >= 75.0:
+                threat_level = "CRITICAL"
+            elif threat_index >= 45.0:
+                threat_level = "HIGH"
+            elif threat_index >= 15.0:
+                threat_level = "ELEVATED"
+            else:
+                threat_level = "NORMAL"
 
         # Calculate flows per second over time series
         fps = 0.0

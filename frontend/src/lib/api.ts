@@ -104,3 +104,12 @@ export async function fetchNetworkInterfaces(): Promise<any> {
   if (!res.ok) throw new Error("Failed to fetch network interfaces");
   return res.json();
 }
+
+export async function clearAllAlerts(): Promise<any> {
+  const res = await fetch(`${API_BASE}/alerts/clear`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to clear alerts");
+  return res.json();
+}
+

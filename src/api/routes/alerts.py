@@ -40,3 +40,13 @@ async def update_alert_status(alert_id: str, payload: AlertStatusUpdate):
     # Broadcast status change to connected dashboards
     await store.broadcast_event("ALERT_UPDATED", updated.model_dump())
     return updated
+
+
+@router.post("/clear")
+async def clear_all_alerts():
+    """Clear all alerts and reset baseline counters."""
+    store.clear_all()
+    await store.broadcast_event("ALERTS_CLEARED", {"status": "SUCCESS"})
+    await store.broadcast_event("METRICS_UPDATED", store.get_overview_metrics().model_dump())
+    return {"status": "SUCCESS", "message": "All alerts successfully cleared"}
+
