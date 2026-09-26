@@ -126,14 +126,16 @@ export default function Home() {
               });
             }
           } else if (payload.type === "NEW_ALERT") {
-            const newAlert: SecurityAlert = payload.alert;
-            setAlerts((prev) => {
-              if (prev.some((a) => a.alert_id === newAlert.alert_id)) return prev;
-              return [newAlert, ...prev.slice(0, 499)];
-            });
-            if (newAlert.severity === "CRITICAL") {
-              setToastAlert(newAlert);
-              setTimeout(() => setToastAlert(null), 6000);
+            const newAlert: SecurityAlert | undefined = payload.data || payload.alert;
+            if (newAlert && newAlert.alert_id) {
+              setAlerts((prev) => {
+                if (prev.some((a) => a.alert_id === newAlert.alert_id)) return prev;
+                return [newAlert, ...prev.slice(0, 499)];
+              });
+              if (newAlert.severity === "CRITICAL") {
+                setToastAlert(newAlert);
+                setTimeout(() => setToastAlert(null), 6000);
+              }
             }
           }
         } catch (err) {

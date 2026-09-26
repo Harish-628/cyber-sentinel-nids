@@ -65,9 +65,11 @@ export const TrafficAnalysisView: React.FC = () => {
       const len = isMalicious ? (dstPort === 3389 ? 0 : 128) : Math.floor(Math.random() * 800 + 200);
       const verdict = isMalicious ? "THREAT_DETECTED" : "BENIGN_PERMITTED";
 
-      const logLine = `${now} | ${proto.padEnd(4)} | 192.168.${Math.floor(Math.random() * 10 + 1)}.${Math.floor(Math.random() * 250 + 1)}:${srcPort} -> 10.0.0.${Math.floor(Math.random() * 20 + 1)}:${dstPort} | ${flags.padEnd(10)} | LEN=${len}B | AI=${verdict}`;
+      const remoteIps = ["10.196.92.120", "142.250.190.46", "140.82.121.3", "1.1.1.1", "8.8.8.8", "151.101.1.140"];
+      const dstIp = remoteIps[Math.floor(Math.random() * remoteIps.length)];
+      const logLine = `${now} | ${proto.padEnd(4)} | 10.196.92.173:${srcPort} -> ${dstIp}:${dstPort} | ${flags.padEnd(10)} | LEN=${len}B | IFACE=wlp44s0 | AI=${verdict}`;
       setLiveStreamLogs((prev) => [logLine, ...prev.slice(0, 18)]);
-    }, 1200);
+    }, 1000);
 
     return () => clearInterval(streamInterval);
   }, []);

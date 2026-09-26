@@ -57,7 +57,12 @@ class AlertStore:
         if not self.active_websockets:
             return
         
-        message = {"type": event_type, "data": data, "timestamp": datetime.now(timezone.utc).isoformat()}
+        message = {
+            "type": event_type,
+            "data": data,
+            "alert": data if event_type == "NEW_ALERT" else None,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
         dead_sockets = set()
         
         for ws in self.active_websockets:
