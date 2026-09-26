@@ -144,53 +144,53 @@ export const MitreMatrixView: React.FC<MitreMatrixViewProps> = ({
 
   return (
     <div className="space-y-4 font-mono-tech">
-      {/* Top Banner - Glassmorphic */}
-      <div className="glass-panel p-4 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-xl border border-white/10">
+      {/* Top Banner - White Glassmorphic */}
+      <div className="glass-panel p-5 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs border border-white/90 bg-white/80">
         <div>
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-red-500/20 border border-red-500/40 shadow-[0_0_12px_rgba(239,68,68,0.3)] flex items-center justify-center">
-              <Grid className="w-4 h-4 text-red-400" />
+          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center shadow-xs">
+              <Grid className="w-5 h-5 text-rose-600" />
             </div>
             MITRE ATT&CK® ENTERPRISE THREAT MATRIX // NETWORK KILL-CHAIN
           </h2>
-          <p className="text-[10px] text-zinc-400 mt-1">
+          <p className="text-[10px] text-slate-500 mt-1">
             LIVE DETECTION TELEMETRY CORRELATED AGAINST MITRE ATT&CK v15 TACTICS & TECHNIQUES
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-[10px] text-zinc-400 uppercase tracking-wider">COVERAGE:</span>
-          <span className="px-3 py-1 bg-red-500/20 border border-red-500/40 text-red-300 text-[10px] font-bold rounded-lg shadow-[0_0_12px_rgba(239,68,68,0.25)]">
+        <div className="flex items-center gap-2.5 text-xs">
+          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">COVERAGE:</span>
+          <span className="px-3.5 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-bold rounded-xl shadow-xs">
             6 TACTICS ACTIVE
           </span>
         </div>
       </div>
 
-      {/* MITRE Matrix Columns Grid - Glassmorphic */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* MITRE Matrix Columns Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {matrixColumns.map((col) => {
           const totalAlertsInTactic = col.techniques.reduce((acc, t) => {
             return acc + getAlertsForTechnique(t.relatedAttacks).length;
           }, 0);
 
           return (
-            <div key={col.id} className="glass-panel rounded-xl overflow-hidden flex flex-col border border-white/10 shadow-lg">
+            <div key={col.id} className="glass-panel rounded-2xl overflow-hidden flex flex-col border border-white/90 bg-white/80 shadow-xs">
               {/* Tactic Header */}
-              <div className="bg-[#0b1020]/90 backdrop-blur-md border-b border-white/10 p-2.5 flex items-center justify-between">
+              <div className="bg-slate-50 border-b border-slate-200 p-3 flex items-center justify-between">
                 <div>
-                  <h4 className="text-[10px] font-bold text-zinc-100 tracking-wider">
+                  <h4 className="text-[10px] font-bold text-slate-800 tracking-wider">
                     {col.name}
                   </h4>
-                  <span className="text-[8px] text-cyan-400/80 font-mono">{col.code}</span>
+                  <span className="text-[8px] text-blue-600 font-mono font-bold">{col.code}</span>
                 </div>
                 {totalAlertsInTactic > 0 && (
-                  <span className="text-[9px] px-2 py-0.5 bg-red-500/20 border border-red-500/40 text-red-300 font-bold rounded-md shadow-[0_0_8px_rgba(239,68,68,0.3)]">
+                  <span className="text-[9px] px-2 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 font-bold rounded-md shadow-2xs">
                     {totalAlertsInTactic}
                   </span>
                 )}
               </div>
 
               {/* Techniques List */}
-              <div className="p-2 space-y-2 flex-1">
+              <div className="p-2.5 space-y-2 flex-1">
                 {col.techniques.map((tech) => {
                   const techAlerts = getAlertsForTechnique(tech.relatedAttacks);
                   const isSelected = selectedTechnique === tech.id;
@@ -200,26 +200,26 @@ export const MitreMatrixView: React.FC<MitreMatrixViewProps> = ({
                     <button
                       key={tech.id}
                       onClick={() => setSelectedTechnique(tech.id)}
-                      className={`w-full text-left p-2.5 rounded-lg border text-[10px] transition-all duration-200 ${
+                      className={`w-full text-left p-2.5 rounded-xl border text-[10px] transition-all duration-150 ${
                         isSelected
-                          ? "bg-gradient-to-r from-red-500/25 to-red-950/40 border-red-500 text-white font-bold shadow-[0_0_15px_rgba(239,68,68,0.25)]"
+                          ? "bg-rose-50 border-rose-400 text-slate-900 font-bold shadow-xs"
                           : hasAlerts
-                          ? "bg-[#18111e]/80 border-red-500/30 text-zinc-100 hover:border-red-500/50 hover:bg-[#201428]/90"
-                          : "glass-panel-interactive border-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                          ? "bg-rose-50/30 border-rose-200 text-slate-800 hover:border-rose-300"
+                          : "bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[9px] text-cyan-400/70 font-mono">{tech.code}</span>
+                        <span className="text-[9px] text-slate-400 font-mono">{tech.code}</span>
                         {hasAlerts && (
-                          <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse" />
+                          <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                         )}
                       </div>
-                      <div className="font-semibold text-zinc-100 mt-1 leading-snug">
+                      <div className="font-bold text-slate-900 mt-1 leading-snug">
                         {tech.name}
                       </div>
-                      <div className="mt-1.5 flex items-center justify-between text-[8px] text-zinc-400">
-                        <span>{tech.relatedAttacks[0]}</span>
-                        <span className={`font-bold ${hasAlerts ? "text-red-400" : "text-zinc-500"}`}>
+                      <div className="mt-1.5 flex items-center justify-between text-[8px]">
+                        <span className="text-slate-500 font-medium">{tech.relatedAttacks[0]}</span>
+                        <span className={`font-bold ${hasAlerts ? "text-rose-600" : "text-slate-400"}`}>
                           {techAlerts.length} ALTS
                         </span>
                       </div>
@@ -232,44 +232,44 @@ export const MitreMatrixView: React.FC<MitreMatrixViewProps> = ({
         })}
       </div>
 
-      {/* Drill-down Detail Panel for Selected Technique - Glassmorphic */}
+      {/* Drill-down Detail Panel for Selected Technique */}
       {activeTechniqueObj && (
-        <div className="glass-panel p-5 rounded-xl border border-white/10 space-y-4 shadow-2xl">
-          <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-2">
+        <div className="glass-panel p-5 rounded-2xl border border-white/90 bg-white/85 space-y-4 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between border-b border-slate-200 pb-3 gap-2">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-red-500/20 border border-red-500/40 shadow-[0_0_10px_rgba(239,68,68,0.3)] flex items-center justify-center">
-                <ShieldAlert className="w-4 h-4 text-red-400" />
+              <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center shadow-xs">
+                <ShieldAlert className="w-4 h-4 text-rose-600" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-white tracking-wide">
+                <h3 className="text-xs font-bold text-slate-900 tracking-wide">
                   TECHNIQUE: {activeTechniqueObj.name} ({activeTechniqueObj.code})
                 </h3>
-                <p className="text-[10px] text-zinc-400 mt-0.5">
+                <p className="text-[10px] text-slate-500 mt-0.5">
                   {activeTechniqueObj.description}
                 </p>
               </div>
             </div>
-            <div className="text-[10px] text-zinc-400 bg-white/5 px-3 py-1 rounded-md border border-white/10">
-              CORRELATED INCIDENTS: <span className="text-red-400 font-bold">{matchedAlerts.length}</span>
+            <div className="text-[10px] text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 font-bold">
+              CORRELATED INCIDENTS: <span className="text-rose-600 font-bold">{matchedAlerts.length}</span>
             </div>
           </div>
 
           {/* Incidents Table for this technique */}
-          <div className="overflow-x-auto rounded-lg border border-white/10">
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#090e1c]/90 backdrop-blur-md text-cyan-300/80 uppercase text-[9px] border-b border-white/10 font-bold tracking-wider">
+              <thead className="bg-slate-50 text-slate-600 uppercase text-[9px] border-b border-slate-200 font-bold tracking-wider">
                 <tr>
-                  <th className="py-2.5 px-3">TIMESTAMP</th>
-                  <th className="py-2.5 px-3">ALERT ID</th>
-                  <th className="py-2.5 px-3">SEVERITY</th>
-                  <th className="py-2.5 px-3">ATTACK VECTOR</th>
-                  <th className="py-2.5 px-3">SOURCE IP:PORT</th>
-                  <th className="py-2.5 px-3">TARGET IP:PORT</th>
-                  <th className="py-2.5 px-3">STATUS</th>
-                  <th className="py-2.5 px-3 text-right">ACTION</th>
+                  <th className="py-3 px-3.5">TIMESTAMP</th>
+                  <th className="py-3 px-3.5">ALERT ID</th>
+                  <th className="py-3 px-3.5">SEVERITY</th>
+                  <th className="py-3 px-3.5">ATTACK VECTOR</th>
+                  <th className="py-3 px-3.5">SOURCE IP:PORT</th>
+                  <th className="py-3 px-3.5">TARGET IP:PORT</th>
+                  <th className="py-3 px-3.5">STATUS</th>
+                  <th className="py-3 px-3.5 text-right">ACTION</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04]">
+              <tbody className="divide-y divide-slate-100 bg-white/60">
                 {matchedAlerts.length > 0 ? (
                   Array.from(
                     new Map(matchedAlerts.map((x) => [x.alert_id, x])).values()
@@ -278,35 +278,35 @@ export const MitreMatrixView: React.FC<MitreMatrixViewProps> = ({
                     .map((a, idx) => (
                       <tr
                         key={`${a.alert_id}-${idx}`}
-                        className="hover:bg-cyan-500/[0.04] transition-all duration-150 cursor-pointer"
+                        className="hover:bg-blue-50/50 transition-colors cursor-pointer"
                         onClick={() => onSelectAlert(a)}
                       >
-                        <td className="py-2.5 px-3 text-zinc-400 text-[10px] whitespace-nowrap">
+                        <td className="py-3 px-3.5 text-slate-500 text-[10px] whitespace-nowrap">
                           {a.timestamp.split("T")[1]?.slice(0, 8) || a.timestamp}
                         </td>
-                        <td className="py-2.5 px-3 font-bold text-zinc-200 whitespace-nowrap">{a.alert_id}</td>
-                        <td className="py-2.5 px-3 whitespace-nowrap">
+                        <td className="py-3 px-3.5 font-bold text-slate-800 whitespace-nowrap">{a.alert_id}</td>
+                        <td className="py-3 px-3.5 whitespace-nowrap">
                           <span
-                            className={`px-2 py-0.5 text-[9px] border font-bold rounded-md ${
+                            className={`px-2.5 py-0.5 text-[9px] border font-bold rounded-md ${
                               a.severity === "CRITICAL"
-                                ? "bg-red-500/20 text-red-300 border-red-500/40 shadow-[0_0_10px_rgba(239,68,68,0.2)]"
-                                : "bg-orange-500/20 text-orange-300 border-orange-500/40 shadow-[0_0_10px_rgba(249,115,22,0.2)]"
+                                ? "bg-rose-50 text-rose-700 border-rose-200"
+                                : "bg-orange-50 text-orange-700 border-orange-200"
                             }`}
                           >
                             {a.severity}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 text-white font-semibold whitespace-nowrap">{a.classification}</td>
-                        <td className="py-2.5 px-3 text-cyan-400 whitespace-nowrap">{a.source_ip}:{a.source_port}</td>
-                        <td className="py-2.5 px-3 text-zinc-300 whitespace-nowrap">{a.destination_ip}:{a.destination_port}</td>
-                        <td className="py-2.5 px-3 text-zinc-400 text-[10px] whitespace-nowrap">{a.status}</td>
-                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        <td className="py-3 px-3.5 text-slate-900 font-bold whitespace-nowrap">{a.classification}</td>
+                        <td className="py-3 px-3.5 text-blue-600 font-bold whitespace-nowrap">{a.source_ip}:{a.source_port}</td>
+                        <td className="py-3 px-3.5 text-slate-700 whitespace-nowrap">{a.destination_ip}:{a.destination_port}</td>
+                        <td className="py-3 px-3.5 text-slate-600 text-[10px] whitespace-nowrap font-medium">{a.status}</td>
+                        <td className="py-3 px-3.5 text-right whitespace-nowrap">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               onSelectAlert(a);
                             }}
-                            className="px-2.5 py-1 text-[9px] bg-white/5 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 text-zinc-200 border border-white/10 rounded-md transition font-semibold"
+                            className="px-3 py-1 text-[10px] bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg transition font-bold shadow-2xs"
                           >
                             INSPECT
                           </button>
@@ -315,7 +315,7 @@ export const MitreMatrixView: React.FC<MitreMatrixViewProps> = ({
                     ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-zinc-500 text-xs">
+                    <td colSpan={8} className="py-8 text-center text-slate-400 text-xs">
                       NO ACTIVE DETECTIONS CORRELATED TO {activeTechniqueObj.code} AT THIS TIME.
                     </td>
                   </tr>

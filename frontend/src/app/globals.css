@@ -2,30 +2,30 @@
 
 @layer base {
   :root {
-    --background: #05070d;
-    --foreground: #e2e8f0;
-    --card: #0c101c;
-    --card-foreground: #e2e8f0;
-    --border: rgba(255, 255, 255, 0.08);
-    --muted: #0f1424;
-    --muted-foreground: #94a3b8;
-    --accent: #1e293b;
-    --accent-foreground: #ffffff;
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --border: rgba(226, 232, 240, 0.8);
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #e2e8f0;
+    --accent-foreground: #0f172a;
     --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace;
   }
 }
 
 body {
-  background-color: #05070d;
-  color: #cbd5e1;
+  background-color: #f8fafc;
+  color: #0f172a;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
   background-image: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.08), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 100% 50%, rgba(99, 102, 241, 0.05), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 0% 80%, rgba(239, 68, 68, 0.04), transparent 70%),
-    radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 28px 28px;
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(56, 189, 248, 0.15), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 15%, rgba(139, 92, 246, 0.10), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 110%, rgba(16, 185, 129, 0.10), transparent 70%),
+    radial-gradient(rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 24px 24px;
   background-attachment: fixed;
 }
 
@@ -34,91 +34,95 @@ body {
   font-feature-settings: "zero" 1, "tnum" 1;
 }
 
-/* Glassmorphism Tier-1 Utilities */
+/* White Glassmorphism Crystal Tier-1 Utilities */
 .glass-panel {
-  background: rgba(12, 16, 28, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05), 0 2px 8px -2px rgba(15, 23, 42, 0.03);
 }
 
 .glass-panel-interactive {
-  background: rgba(12, 16, 28, 0.55);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-panel-interactive:hover {
-  background: rgba(18, 25, 44, 0.75);
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 12px 36px -8px rgba(56, 189, 248, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(37, 99, 235, 0.4);
+  box-shadow: 0 12px 32px -4px rgba(37, 99, 235, 0.12), 0 0 12px rgba(37, 99, 235, 0.08);
   transform: translateY(-1px);
 }
 
 .glass-header {
-  background: rgba(6, 9, 18, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 4px 24px -2px rgba(15, 23, 42, 0.04);
 }
 
 .glass-drawer {
-  background: rgba(7, 10, 20, 0.92);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.7);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-left: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: -15px 0 50px -10px rgba(15, 23, 42, 0.15);
 }
 
 .glass-pill {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(241, 245, 249, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(203, 213, 225, 0.7);
 }
 
-/* Cyber Glow Accents */
+/* Light Cyber Glow Accents */
+.cyber-glow-blue {
+  box-shadow: 0 0 20px -2px rgba(37, 99, 235, 0.25);
+}
+
 .cyber-glow-cyan {
-  box-shadow: 0 0 25px -4px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 0 20px -2px rgba(14, 165, 233, 0.25);
 }
 
 .cyber-glow-red {
-  box-shadow: 0 0 25px -4px rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 20px -2px rgba(239, 68, 68, 0.25);
 }
 
 .cyber-glow-emerald {
-  box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 20px -2px rgba(16, 185, 129, 0.25);
 }
 
 .cyber-glow-amber {
-  box-shadow: 0 0 25px -4px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.25);
 }
 
-/* High-tech Slim Scrollbar */
+/* Crisp Clean Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(5, 7, 13, 0.6);
+  background: rgba(241, 245, 249, 0.6);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.4);
+  background: rgba(100, 116, 139, 0.7);
 }
 
-/* Radar pulse animation */
-@keyframes radar-pulse {
+/* Radar pulse animation for alerts */
+@keyframes radar-pulse-light {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
   }
   70% {
     transform: scale(1);
@@ -131,12 +135,12 @@ body {
 }
 
 .radar-live-alert {
-  animation: radar-pulse 2s infinite;
+  animation: radar-pulse-light 2s infinite;
 }
 
 @keyframes pulse-cyan {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.05); }
+  50% { opacity: 0.75; transform: scale(1.05); }
 }
 
 .pulse-glow-cyan {

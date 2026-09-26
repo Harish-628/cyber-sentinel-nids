@@ -39,14 +39,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "INCIDENT TRIAGE",
       icon: ShieldAlert,
       badge: activeAlertCount > 0 ? activeAlertCount : null,
-      badgeColor: "bg-red-950/80 text-red-300 border-red-700/80 font-bold",
+      badgeColor: "bg-rose-500 text-white font-bold shadow-xs",
     },
     {
       id: "mitre",
       label: "MITRE ATT&CK MATRIX",
       icon: Grid,
-      badge: "FRAMEWORK",
-      badgeColor: "bg-[#181c2b] text-zinc-400 border-zinc-700",
+      badge: "v15",
+      badgeColor: "bg-slate-200 text-slate-700 font-bold",
     },
     {
       id: "traffic",
@@ -59,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "ADVERSARIAL LAB",
       icon: Terminal,
       badge: "LIVE",
-      badgeColor: "bg-emerald-950 text-emerald-300 border-emerald-800",
+      badgeColor: "bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold",
     },
     {
       id: "model",
@@ -70,11 +70,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 glass-panel border-r border-white/[0.08] flex flex-col justify-between select-none z-20">
+    <aside className="w-64 glass-panel border-r border-slate-200/80 bg-white/75 backdrop-blur-2xl flex flex-col justify-between select-none z-20 shadow-sm">
       <div>
         {/* Navigation Group */}
-        <div className="p-3">
-          <p className="text-[9px] font-mono-tech tracking-wider text-zinc-500 uppercase px-2.5 py-1">
+        <div className="p-3.5">
+          <p className="text-[10px] font-mono-tech tracking-wider text-slate-400 font-bold uppercase px-3 py-1.5">
             SOC CONSOLE VIEWS
           </p>
           <nav className="space-y-1 mt-1">
@@ -85,20 +85,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => onTabChange(item.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-[11px] font-mono-tech rounded-[3px] transition ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-mono-tech rounded-xl transition-all duration-150 ${
                     isActive
-                      ? "bg-cyan-950/50 text-cyan-100 border-l-2 border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.2)] inset-shadow-sm"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.05] border-l-2 border-transparent"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/25"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 font-semibold"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${isActive ? "text-cyan-400" : "text-zinc-500"}`} />
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400"}`} />
                     <span>{item.label}</span>
                   </div>
                   {item.badge !== null && (
                     <span
-                      className={`text-[9px] px-1.5 py-0.2 border rounded-[2px] ${
-                        item.badgeColor || "bg-white/[0.06] text-zinc-300 border-white/[0.1]"
+                      className={`text-[9px] px-2 py-0.5 rounded-full ${
+                        item.badgeColor || "bg-slate-100 text-slate-700"
                       }`}
                     >
                       {item.badge}
@@ -111,31 +111,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Live Ingestion Interfaces Widget */}
-        <div className="px-3 pt-1">
-          <p className="text-[9px] font-mono-tech tracking-wider text-zinc-500 uppercase px-2.5 py-1">
+        <div className="px-3.5 pt-1">
+          <p className="text-[10px] font-mono-tech tracking-wider text-slate-400 font-bold uppercase px-3 py-1.5">
             PACKET INGESTION ENGINE
           </p>
-          <div className="glass-panel p-2.5 rounded-[3px] space-y-2 mt-1 border border-white/[0.08]">
+          <div className="glass-panel p-3 rounded-xl space-y-2.5 mt-1 border border-slate-200/80 bg-white/80 shadow-xs">
             <div className="flex items-center justify-between text-[10px] font-mono-tech">
-              <span className="text-zinc-400 flex items-center gap-1.5">
-                <Radio className="w-3 h-3 text-cyan-400" /> Active Adapter
+              <span className="text-slate-500 flex items-center gap-1.5 font-medium">
+                <Radio className="w-3.5 h-3.5 text-sky-600" /> Active Adapter
               </span>
-              <span className="text-cyan-300 font-bold bg-cyan-950/60 px-1.5 py-0.2 rounded border border-cyan-500/40">
+              <span className="text-sky-800 font-bold bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">
                 wlp44s0 (Wi-Fi)
               </span>
             </div>
             <div className="flex items-center justify-between text-[10px] font-mono-tech">
-              <span className="text-zinc-400 flex items-center gap-1.5">
-                <Database className="w-3 h-3 text-emerald-400" /> Flow Extraction
+              <span className="text-slate-500 flex items-center gap-1.5 font-medium">
+                <Database className="w-3.5 h-3.5 text-emerald-600" /> Flow Extraction
               </span>
-              <span className="text-emerald-300 font-bold">41 Metrics</span>
+              <span className="text-emerald-700 font-bold">41 Metrics</span>
             </div>
             <div className="flex items-center justify-between text-[10px] font-mono-tech">
-              <span className="text-zinc-400 flex items-center gap-1.5">
-                <Server className="w-3 h-3 text-purple-400" /> AI Classification
+              <span className="text-slate-500 flex items-center gap-1.5 font-medium">
+                <Server className="w-3.5 h-3.5 text-purple-600" /> AI Classification
               </span>
-              <span className="text-emerald-400 font-bold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> ONLINE
+              <span className="text-emerald-700 font-bold flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> ONLINE
               </span>
             </div>
           </div>
@@ -143,31 +143,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Model Spec Mini-Panel at Footer */}
-      <div className="p-3 border-t border-white/[0.08] bg-black/40">
-        <div className="text-[9px] font-mono-tech text-zinc-500 mb-2 uppercase tracking-wider flex items-center justify-between">
-          <span className="flex items-center gap-1 text-zinc-400">
-            <Cpu className="w-3 h-3 text-cyan-400" /> AI SENSOR TELEMETRY
+      <div className="p-3.5 border-t border-slate-200/80 bg-slate-50/80">
+        <div className="text-[9px] font-mono-tech text-slate-500 mb-2 uppercase tracking-wider flex items-center justify-between font-bold">
+          <span className="flex items-center gap-1 text-slate-600">
+            <Cpu className="w-3.5 h-3.5 text-blue-600" /> AI SENSOR TELEMETRY
           </span>
-          <span className="text-emerald-400 text-[8px] font-bold px-1 py-0.2 bg-emerald-950/80 border border-emerald-500/40 rounded">
+          <span className="text-emerald-700 text-[8px] font-bold px-1.5 py-0.5 bg-emerald-50 border border-emerald-300 rounded-md">
             PASS
           </span>
         </div>
         <div className="space-y-1.5 text-[10px] font-mono-tech">
           <div className="flex justify-between">
-            <span className="text-zinc-500">Architecture:</span>
-            <span className="text-zinc-200 font-medium">Random Forest (100)</span>
+            <span className="text-slate-500 font-medium">Architecture:</span>
+            <span className="text-slate-800 font-bold">Random Forest (100)</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-zinc-500">Benchmark Acc:</span>
-            <span className="text-emerald-400 font-bold">100.00%</span>
+            <span className="text-slate-500 font-medium">Benchmark Acc:</span>
+            <span className="text-emerald-600 font-bold">100.00%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-zinc-500">Benign FPR:</span>
-            <span className="text-emerald-400 font-bold">0.000%</span>
+            <span className="text-slate-500 font-medium">Benign FPR:</span>
+            <span className="text-emerald-600 font-bold">0.000%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-zinc-500">Inference Latency:</span>
-            <span className="text-cyan-400 font-bold">~7.0 ms</span>
+            <span className="text-slate-500 font-medium">Inference Latency:</span>
+            <span className="text-blue-600 font-bold">~7.0 ms</span>
           </div>
         </div>
       </div>

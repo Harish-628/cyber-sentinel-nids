@@ -102,28 +102,42 @@ export default function Home() {
 
       socket.onmessage = (event) => {
         try {
-          const msg = JSON.parse(event.data);
-          if (msg.type === "NEW_ALERT") {
-            const newAlert: SecurityAlert = msg.data;
-            setAlerts((prev) => {
-              const filtered = prev.filter((a) => a.alert_id !== newAlert.alert_id);
-              return [newAlert, ...filtered.slice(0, 499)];
-            });
-            // Show toast for critical/high alerts
-            if (newAlert.severity === "CRITICAL" || newAlert.severity === "HIGH") {
-              setToastAlert(newAlert);
-              setTimeout(() => setToastAlert(null), 4000);
+          const payload = JSON.parse(event.data);
+          if (payload.type === "INITIAL_STATE" || payload.type === "TELEMETRY_BATCH") {
+            const data = payload.data;
+            if (data.metrics) setMetrics(data.metrics);
+            if (data.traffic_point) {
+              setTrafficHistory((prev) => [...prev.slice(-59), data.traffic_point]);
             }
-            // Update metrics directly without full alert collision race
-            fetchOverviewMetrics().then(setMetrics).catch(() => {});
-          } else if (msg.type === "ALERT_UPDATED") {
-            const updated: SecurityAlert = msg.data;
-            setAlerts((prev) =>
-              prev.map((a) => (a.alert_id === updated.alert_id ? updated : a))
-            );
+            if (data.alerts && Array.isArray(data.alerts)) {
+              setAlerts((prev) => {
+                const map = new Map<string, SecurityAlert>();
+                for (const item of data.alerts) {
+                  map.set(item.alert_id, item);
+                }
+                for (const item of prev) {
+                  if (!map.has(item.alert_id)) {
+                    map.set(item.alert_id, item);
+                  }
+                }
+                return Array.from(map.values())
+                  .sort((x, y) => new Date(y.timestamp).getTime() - new Date(x.timestamp).getTime())
+                  .slice(0, 500);
+              });
+            }
+          } else if (payload.type === "NEW_ALERT") {
+            const newAlert: SecurityAlert = payload.alert;
+            setAlerts((prev) => {
+              if (prev.some((a) => a.alert_id === newAlert.alert_id)) return prev;
+              return [newAlert, ...prev.slice(0, 499)];
+            });
+            if (newAlert.severity === "CRITICAL") {
+              setToastAlert(newAlert);
+              setTimeout(() => setToastAlert(null), 6000);
+            }
           }
         } catch (err) {
-          console.error("Error processing websocket message", err);
+          console.error("Failed to parse websocket message", err);
         }
       };
 
@@ -135,20 +149,20 @@ export default function Home() {
         setIsWsConnected(false);
       };
     } catch (e) {
-      setIsWsConnected(false);
+      console.error("WebSocket connection failure", e);
     }
 
     return () => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.close();
+      if (wsRef.current) {
+        wsRef.current.close();
       }
     };
-  }, [refreshData]);
+  }, []);
 
-  const activeAlertsCount = metrics?.active_alerts ?? 0;
+  const activeAlertsCount = alerts.filter((a) => a.status === "NEW" || a.status === "INVESTIGATING").length;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#07080c] text-zinc-300 font-mono-tech relative">
+    <div className="flex flex-col min-h-screen bg-transparent text-slate-800 font-mono-tech relative">
       {/* Toast Notification for incoming Critical Alert */}
       {toastAlert && (
         <div
@@ -157,14 +171,14 @@ export default function Home() {
             setCurrentTab("alerts");
             setToastAlert(null);
           }}
-          className="fixed bottom-4 right-4 z-50 bg-[#160c10] border border-red-700/90 shadow-2xl shadow-red-950 p-3 rounded-[2px] cursor-pointer animate-bounce flex items-center gap-3 max-w-md"
+          className="fixed bottom-5 right-5 z-50 glass-panel border-rose-300 bg-white/95 shadow-2xl shadow-rose-950/15 p-4 rounded-xl cursor-pointer animate-bounce flex items-center gap-3.5 max-w-md border-l-4 border-l-rose-500"
         >
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+          <div className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
           <div>
-            <div className="text-xs font-bold text-red-300 uppercase">
+            <div className="text-xs font-bold text-rose-700 uppercase tracking-wide">
               HIGH-IMPACT THREAT DETECTED: {toastAlert.classification}
             </div>
-            <p className="text-[10px] text-zinc-400">
+            <p className="text-[10px] text-slate-500 mt-0.5">
               {toastAlert.source_ip} -&gt; {toastAlert.destination_ip}:{toastAlert.destination_port} | Confidence: {(toastAlert.confidence_score * 100).toFixed(1)}%
             </p>
           </div>
@@ -199,7 +213,7 @@ export default function Home() {
         />
 
         {/* Center Content View Area */}
-        <main className="flex-1 p-3.5 overflow-y-auto max-h-[calc(100vh-3.25rem)]">
+        <main className="flex-1 p-4 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
           {currentTab === "overview" && (
             <OverviewView
               metrics={metrics}
