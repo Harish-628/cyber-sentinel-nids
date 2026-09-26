@@ -189,6 +189,7 @@ export default function Home() {
           currentTab={currentTab}
           onTabChange={setCurrentTab}
           activeAlertCount={activeAlertsCount}
+          activeInterface={trafficMode?.active_interface || "wlp44s0"}
         />
 
         {/* Center Content View Area */}

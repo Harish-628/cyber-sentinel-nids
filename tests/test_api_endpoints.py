@@ -130,6 +130,41 @@ def test_nids_api_lifecycle():
         assert "top_targeted_ports" in dive
         print("✓ Traffic deep-dive metrics verified")
 
+        # 8. Test DoS Volumetric Flood Detection
+        dos_flood_payload = {
+            "src_ip": "192.168.1.189",
+            "dst_ip": "10.196.92.173",
+            "src_port": 51234,
+            "dst_port": 8000,
+            "protocol": "TCP",
+            "flow_duration": 20000000.0,
+            "tot_fwd_pkts": 300,
+            "tot_bwd_pkts": 2,
+            "tot_len_fwd_pkts": 38400.0,
+            "tot_len_bwd_pkts": 80.0,
+            "fwd_pkt_len_max": 128.0,
+            "fwd_pkt_len_min": 128.0,
+            "fwd_pkt_len_mean": 128.0,
+            "bwd_pkt_len_mean": 40.0,
+            "flow_bytes_s": 1920.0,
+            "flow_pkts_s": 15.0,
+            "flow_iat_mean": 66666.0,
+            "syn_flag_count": 1,
+            "ack_flag_count": 0,
+            "init_win_bytes_forward": 1024,
+            "init_win_bytes_backward": 0,
+            "act_data_pkt_fwd": 300,
+            "avg_pkt_size": 128.0,
+        }
+        res = client.post("/api/v1/flows/analyze", json=dos_flood_payload)
+        assert res.status_code == 200
+        dos_data = res.json()
+        assert dos_data["is_malicious"] is True
+        assert dos_data["classification"] in {"DoS", "DDoS"}
+        assert dos_data["severity"] in {"HIGH", "CRITICAL"}
+        print(f"✓ DoS flood analysis verified: Class={dos_data['classification']}, Conf={dos_data['confidence_score']:.4f}, Sev={dos_data['severity']}")
+
+
 if __name__ == "__main__":
     test_nids_api_lifecycle()
     print("\n🎉 ALL PHASE 2 API BACKEND INTEGRATION TESTS PASSED!")

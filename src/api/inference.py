@@ -158,18 +158,32 @@ class NIDSInferenceEngine:
         vector = self.extract_feature_vector(payload)
         scaled_vector = self.scaler.transform(vector)
 
-        # 2. Model inference
-        pred_idx = int(self.model.predict(scaled_vector)[0])
-        classification = self.class_mapping.get(pred_idx, "UNKNOWN")
-
-        # 3. Confidence score
+        # 2. Model inference with calibrated threat anomaly detection
         if hasattr(self.model, "predict_proba"):
             probabilities = self.model.predict_proba(scaled_vector)[0]
-            confidence = float(probabilities[pred_idx])
-        else:
-            confidence = 0.95
+            benign_prob = float(probabilities[0])
+            attack_prob = 1.0 - benign_prob
 
-        # 4. Severity metadata
+            if attack_prob >= 0.50:
+                # Flow has majority attack probability: assign to top attack category
+                attack_sub_probs = probabilities[1:]
+                best_atk_idx = int(np.argmax(attack_sub_probs)) + 1
+                pred_idx = best_atk_idx
+                classification = self.class_mapping.get(pred_idx, "UNKNOWN")
+                confidence = float(probabilities[pred_idx])
+                is_malicious = True
+            else:
+                pred_idx = 0
+                classification = "BENIGN"
+                confidence = benign_prob
+                is_malicious = False
+        else:
+            pred_idx = int(self.model.predict(scaled_vector)[0])
+            classification = self.class_mapping.get(pred_idx, "UNKNOWN")
+            confidence = 0.95
+            is_malicious = classification != "BENIGN"
+
+        # 3. Severity metadata
         meta = SOC_ALERT_METADATA.get(classification, {
             "severity": "NORMAL" if classification == "BENIGN" else "HIGH",
             "color": "green" if classification == "BENIGN" else "red",
@@ -177,8 +191,6 @@ class NIDSInferenceEngine:
             "description": f"Classified as {classification}",
             "action": "Inspect packet payload and monitor host.",
         })
-
-        is_malicious = classification != "BENIGN"
         alert = None
 
         if is_malicious:

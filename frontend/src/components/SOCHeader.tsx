@@ -177,21 +177,15 @@ export const SOCHeader: React.FC<SOCHeaderProps> = ({
 
         <div className="h-6 w-px bg-slate-200" />
 
-        {/* Global Sensor State */}
-        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg shadow-xs">
+        {/* Global Live Sensor & Telemetry Indicator */}
+        <div className="flex items-center gap-2 bg-emerald-50/90 border border-emerald-200/90 px-3 py-1.5 rounded-xl shadow-2xs">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isWsConnected ? "bg-emerald-400" : "bg-amber-400"} opacity-75`}></span>
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${isWsConnected ? "bg-emerald-600" : "bg-amber-600"}`}></span>
           </span>
           <span className="text-[10px] font-mono-tech text-emerald-800 font-bold tracking-wider">
-            SENSOR: ONLINE
+            {isWsConnected ? "TELEMETRY // LIVE" : "CONNECTING..."}
           </span>
-        </div>
-
-        {/* WebSocket Stream Indicator */}
-        <div className="flex items-center gap-1.5 text-[10px] font-mono-tech text-slate-500 font-semibold">
-          <Radio className={`w-3.5 h-3.5 ${isWsConnected ? "text-emerald-500" : "text-amber-500 animate-spin"}`} />
-          <span>{isWsConnected ? "TELEMETRY: LIVE" : "CONNECTING..."}</span>
         </div>
       </div>
 

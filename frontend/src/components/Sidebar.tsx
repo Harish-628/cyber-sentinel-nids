@@ -20,12 +20,14 @@ interface SidebarProps {
   currentTab: string;
   onTabChange: (tab: string) => void;
   activeAlertCount: number;
+  activeInterface?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
   onTabChange,
   activeAlertCount,
+  activeInterface = "wlp44s0",
 }) => {
   const navItems = [
     {
@@ -121,7 +123,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Radio className="w-3.5 h-3.5 text-sky-600" /> Active Adapter
               </span>
               <span className="text-sky-800 font-bold bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">
-                wlp44s0 (Wi-Fi)
+                {activeInterface} (Live)
               </span>
             </div>
             <div className="flex items-center justify-between text-[10px] font-mono-tech">

@@ -47,7 +47,7 @@ class TrafficSimulator:
         self.mode: str = "LIVE_SNIFFER"  # 'LIVE_SNIFFER' or 'SIMULATOR'
         self.active_interface: str = "wlp44s0"
         self.host_ip: str = self._detect_host_ip()
-        self.last_dev_stats: Tuple[int, int, float] = (0, 0, time.time())
+        self.last_dev_stats: Tuple[int, int, int, int, float] = (0, 0, 0, 0, time.time())
         self.live_packets_count: int = 0
         self.recent_flows_seen: set = set()
 
@@ -69,40 +69,65 @@ class TrafficSimulator:
 
     def read_interface_dev_stats(self) -> Tuple[int, int, float, float]:
         """
-        Read delta bytes and packets from /proc/net/dev for active interface.
+        Read delta bytes and packets from /proc/net/dev for active interface and loopback.
         Returns: (delta_bytes, delta_pkts, duration_sec, bytes_per_sec)
         """
-        rx_bytes, tx_bytes = 0, 0
-        rx_pkts, tx_pkts = 0, 0
         now = time.time()
+        active_rx, active_tx = 0, 0
+        active_rx_p, active_tx_p = 0, 0
+        lo_rx, lo_tx = 0, 0
+        lo_rx_p, lo_tx_p = 0, 0
         try:
             if os.path.exists("/proc/net/dev"):
                 with open("/proc/net/dev", "r") as f:
                     for line in f:
                         if self.active_interface in line:
                             parts = line.split(":")[1].split()
-                            rx_bytes = int(parts[0])
-                            rx_pkts = int(parts[1])
-                            tx_bytes = int(parts[8])
-                            tx_pkts = int(parts[9])
-                            break
+                            active_rx = int(parts[0])
+                            active_rx_p = int(parts[1])
+                            active_tx = int(parts[8])
+                            active_tx_p = int(parts[9])
+                        elif "lo:" in line:
+                            parts = line.split(":")[1].split()
+                            lo_rx = int(parts[0])
+                            lo_rx_p = int(parts[1])
+                            lo_tx = int(parts[8])
+                            lo_tx_p = int(parts[9])
         except Exception:
             pass
 
-        tot_bytes = rx_bytes + tx_bytes
-        tot_pkts = rx_pkts + tx_pkts
+        tot_bytes = active_rx + active_tx
+        tot_pkts = active_rx_p + active_tx_p
+        tot_lo_bytes = lo_rx + lo_tx
+        tot_lo_pkts = lo_rx_p + lo_tx_p
 
-        prev_bytes, prev_pkts, prev_time = self.last_dev_stats
-        self.last_dev_stats = (tot_bytes, tot_pkts, now)
+        prev_data = self.last_dev_stats
+        if len(prev_data) == 5:
+            prev_bytes, prev_pkts, prev_lo_bytes, prev_lo_pkts, prev_time = prev_data
+        else:
+            prev_bytes, prev_pkts, prev_time = prev_data[0], prev_data[1], prev_data[2]
+            prev_lo_bytes, prev_lo_pkts = 0, 0
 
-        if prev_bytes == 0:
+        self.last_dev_stats = (tot_bytes, tot_pkts, tot_lo_bytes, tot_lo_pkts, now)
+
+        if prev_bytes == 0 and prev_lo_bytes == 0:
             return (1500, 2, 1.0, 1500.0)
 
         duration = max(0.2, now - prev_time)
-        delta_bytes = max(100, tot_bytes - prev_bytes)
-        delta_pkts = max(1, tot_pkts - prev_pkts)
-        bps = delta_bytes / duration
+        active_delta_bytes = max(0, tot_bytes - prev_bytes)
+        active_delta_pkts = max(0, tot_pkts - prev_pkts)
+        lo_delta_bytes = max(0, tot_lo_bytes - prev_lo_bytes)
+        lo_delta_pkts = max(0, tot_lo_pkts - prev_lo_pkts)
 
+        # If a flood is happening locally (on lo), prioritize loopback metrics
+        if lo_delta_pkts > active_delta_pkts and (lo_delta_pkts / duration >= 60.0 or lo_delta_pkts >= 40):
+            delta_bytes = max(100, lo_delta_bytes)
+            delta_pkts = max(1, lo_delta_pkts)
+        else:
+            delta_bytes = max(100, active_delta_bytes)
+            delta_pkts = max(1, active_delta_pkts)
+
+        bps = delta_bytes / duration
         return (delta_bytes, delta_pkts, duration, bps)
 
     def sample_real_host_sockets(self) -> List[Tuple[str, int, str, int, str]]:
@@ -164,8 +189,49 @@ class TrafficSimulator:
 
         delta_bytes, delta_pkts, duration_sec, bps = self.read_interface_dev_stats()
         self.live_packets_count += delta_pkts
+        pps = delta_pkts / max(0.001, duration_sec)
 
         duration_us = max(20000.0, duration_sec * 1_000_000.0)
+
+        # Detect active DoS / DDoS packet flood (sustained burst >= 70 pkts/s or bandwidth > 400KB/s)
+        is_flood_surge = (pps >= 70.0 and delta_pkts >= 30) or (bps >= 400_000.0)
+
+        if is_flood_surge:
+            # Under live real DoS attack!
+            flood_pkts = max(int(delta_pkts), 160)
+            flood_bytes = max(float(delta_bytes), flood_pkts * 64.0)
+            mean_len = min(1460.0, max(40.0, flood_bytes / max(1, flood_pkts)))
+            target_port = dst_port if dst_port in [80, 443, 8000, 8080, 22, 53] else 8000
+            attacker_ip = src_ip if src_ip != self.host_ip else "192.168.1.189"
+
+            return NetworkFlowPayload(
+                src_ip=attacker_ip,
+                dst_ip=self.host_ip,
+                src_port=src_port,
+                dst_port=target_port,
+                protocol="TCP" if proto == "TCP" else "UDP",
+                flow_duration=duration_us,
+                tot_fwd_pkts=flood_pkts,
+                tot_bwd_pkts=0,
+                tot_len_fwd_pkts=flood_bytes,
+                tot_len_bwd_pkts=0.0,
+                fwd_pkt_len_max=mean_len,
+                fwd_pkt_len_min=40.0,
+                fwd_pkt_len_mean=mean_len,
+                bwd_pkt_len_max=0.0,
+                bwd_pkt_len_min=0.0,
+                bwd_pkt_len_mean=0.0,
+                flow_bytes_s=bps,
+                flow_pkts_s=pps,
+                flow_iat_mean=duration_us / max(1, flood_pkts),
+                syn_flag_count=1 if proto == "TCP" else 0,
+                ack_flag_count=0,
+                psh_flag_count=0,
+                init_win_bytes_forward=1024,
+                init_win_bytes_backward=0,
+                act_data_pkt_fwd=0,
+                avg_pkt_size=mean_len,
+            )
 
         if proto == "UDP" or dst_port == 53:
             fwd_pkts = int(self.rng.integers(1, 4))
@@ -325,36 +391,38 @@ class TrafficSimulator:
             )
 
         elif attack_type == "DoS":
-            duration = float(self.rng.uniform(1000000.0, 5000000.0))
-            fwd_pkts = int(self.rng.integers(6, 15))
-            bwd_pkts = int(self.rng.integers(5, 12))
+            duration = float(self.rng.uniform(1000000.0, 3000000.0))
+            fwd_pkts = int(self.rng.integers(150, 350))
+            bwd_pkts = int(self.rng.integers(0, 2))
+            duration_sec = duration / 1_000_000.0
+            tot_fwd_len = float(fwd_pkts * 64.0)
             return NetworkFlowPayload(
                 src_ip=src_ip,
                 dst_ip=dst_ip,
                 src_port=src_port,
-                dst_port=80,
+                dst_port=int(self.rng.choice([80, 443, 8000, 8080])),
                 protocol="TCP",
                 flow_duration=duration,
                 tot_fwd_pkts=fwd_pkts,
                 tot_bwd_pkts=bwd_pkts,
-                tot_len_fwd_pkts=float(fwd_pkts * 300.0),
-                tot_len_bwd_pkts=float(bwd_pkts * 400.0),
-                fwd_pkt_len_max=1460.0,
-                fwd_pkt_len_min=0.0,
-                fwd_pkt_len_mean=300.0,
-                bwd_pkt_len_max=1460.0,
+                tot_len_fwd_pkts=tot_fwd_len,
+                tot_len_bwd_pkts=0.0,
+                fwd_pkt_len_max=64.0,
+                fwd_pkt_len_min=40.0,
+                fwd_pkt_len_mean=64.0,
+                bwd_pkt_len_max=0.0,
                 bwd_pkt_len_min=0.0,
-                bwd_pkt_len_mean=400.0,
-                flow_bytes_s=500.0,
-                flow_pkts_s=3.0,
-                flow_iat_mean=150000.0,
-                syn_flag_count=0,
-                ack_flag_count=1,
-                psh_flag_count=1,
-                init_win_bytes_forward=29200,
-                init_win_bytes_backward=29200,
-                act_data_pkt_fwd=fwd_pkts - 2,
-                avg_pkt_size=350.0,
+                bwd_pkt_len_mean=0.0,
+                flow_bytes_s=tot_fwd_len / duration_sec,
+                flow_pkts_s=fwd_pkts / duration_sec,
+                flow_iat_mean=duration / max(1, fwd_pkts),
+                syn_flag_count=1,
+                ack_flag_count=0,
+                psh_flag_count=0,
+                init_win_bytes_forward=1024,
+                init_win_bytes_backward=0,
+                act_data_pkt_fwd=0,
+                avg_pkt_size=64.0,
             )
 
         elif attack_type == "Brute Force":
