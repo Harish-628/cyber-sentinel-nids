@@ -84,3 +84,20 @@ export interface TrafficModeInfo {
   flow_interval: number;
   attack_probability: number;
 }
+
+export interface RealtimeFlowLog {
+  flow_id: string;
+  timestamp: string;
+  classification: string;
+  is_malicious: boolean;
+  confidence: number;
+  severity: Severity;
+  color: string;
+  src_ip: string;
+  dst_ip: string;
+  src_port: number;
+  dst_port: number;
+  protocol: string;
+  bytes: number;
+  packets: number;
+}

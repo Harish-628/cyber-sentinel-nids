@@ -34,13 +34,45 @@ def hex_to_ipv4(h: str) -> str:
         return "127.0.0.1"
 
 
+def parse_ss_endpoint(endpoint_str: str) -> Tuple[str, int]:
+    """Parse ss endpoint into (ip, port). Handles IPv4, IPv6, and interface scopes."""
+    endpoint_str = endpoint_str.strip()
+    if "%" in endpoint_str:
+        parts = endpoint_str.split("%")
+        ip = parts[0]
+        port_part = parts[1].split(":")[-1]
+        try:
+            return ip, int(port_part)
+        except ValueError:
+            return ip, 0
+
+    if endpoint_str.startswith("["):
+        idx = endpoint_str.rfind("]:")
+        if idx != -1:
+            ip = endpoint_str[1:idx]
+            try:
+                port = int(endpoint_str[idx + 2:])
+            except ValueError:
+                port = 0
+            return ip, port
+        return endpoint_str.strip("[]"), 0
+    else:
+        parts = endpoint_str.rsplit(":", 1)
+        if len(parts) == 2:
+            try:
+                return parts[0], int(parts[1])
+            except ValueError:
+                return parts[0], 0
+        return endpoint_str, 0
+
+
 class TrafficSimulator:
     """Manages real host network telemetry and synthetic benchmark flow generation."""
 
     def __init__(self):
         self.is_running: bool = False
         self.task: Optional[asyncio.Task] = None
-        self.flow_interval: float = 0.8  # ~1.2 flows per second
+        self.flow_interval: float = 0.4  # ~2.5 real-time flow samples per second
         self.attack_probability: float = 0.15  # only in SIMULATOR mode
         self.rng = np.random.default_rng(42)
         # Default to REAL physical network sniffing
@@ -69,14 +101,13 @@ class TrafficSimulator:
 
     def read_interface_dev_stats(self) -> Tuple[int, int, float, float]:
         """
-        Read delta bytes and packets from /proc/net/dev for active interface and loopback.
+        Read delta bytes and packets from /proc/net/dev strictly for the active interface.
+        Prevents localhost/loopback dashboard polling from polluting physical Wi-Fi statistics.
         Returns: (delta_bytes, delta_pkts, duration_sec, bytes_per_sec)
         """
         now = time.time()
         active_rx, active_tx = 0, 0
         active_rx_p, active_tx_p = 0, 0
-        lo_rx, lo_tx = 0, 0
-        lo_rx_p, lo_tx_p = 0, 0
         try:
             if os.path.exists("/proc/net/dev"):
                 with open("/proc/net/dev", "r") as f:
@@ -87,118 +118,140 @@ class TrafficSimulator:
                             active_rx_p = int(parts[1])
                             active_tx = int(parts[8])
                             active_tx_p = int(parts[9])
-                        elif "lo:" in line:
-                            parts = line.split(":")[1].split()
-                            lo_rx = int(parts[0])
-                            lo_rx_p = int(parts[1])
-                            lo_tx = int(parts[8])
-                            lo_tx_p = int(parts[9])
+                            break
         except Exception:
             pass
 
         tot_bytes = active_rx + active_tx
         tot_pkts = active_rx_p + active_tx_p
-        tot_lo_bytes = lo_rx + lo_tx
-        tot_lo_pkts = lo_rx_p + lo_tx_p
 
         prev_data = self.last_dev_stats
-        if len(prev_data) == 5:
-            prev_bytes, prev_pkts, prev_lo_bytes, prev_lo_pkts, prev_time = prev_data
-        else:
-            prev_bytes, prev_pkts, prev_time = prev_data[0], prev_data[1], prev_data[2]
-            prev_lo_bytes, prev_lo_pkts = 0, 0
+        prev_bytes = prev_data[0]
+        prev_pkts = prev_data[1]
+        prev_time = prev_data[-1]
 
-        self.last_dev_stats = (tot_bytes, tot_pkts, tot_lo_bytes, tot_lo_pkts, now)
+        self.last_dev_stats = (tot_bytes, tot_pkts, 0, 0, now)
 
-        if prev_bytes == 0 and prev_lo_bytes == 0:
+        if prev_bytes == 0:
             return (1500, 2, 1.0, 1500.0)
 
         duration = max(0.2, now - prev_time)
-        active_delta_bytes = max(0, tot_bytes - prev_bytes)
-        active_delta_pkts = max(0, tot_pkts - prev_pkts)
-        lo_delta_bytes = max(0, tot_lo_bytes - prev_lo_bytes)
-        lo_delta_pkts = max(0, tot_lo_pkts - prev_lo_pkts)
-
-        # If a flood is happening locally (on lo), prioritize loopback metrics
-        if lo_delta_pkts > active_delta_pkts and (lo_delta_pkts / duration >= 60.0 or lo_delta_pkts >= 40):
-            delta_bytes = max(100, lo_delta_bytes)
-            delta_pkts = max(1, lo_delta_pkts)
-        else:
-            delta_bytes = max(100, active_delta_bytes)
-            delta_pkts = max(1, active_delta_pkts)
-
+        delta_bytes = max(100, tot_bytes - prev_bytes)
+        delta_pkts = max(1, tot_pkts - prev_pkts)
         bps = delta_bytes / duration
         return (delta_bytes, delta_pkts, duration, bps)
 
     def sample_real_host_sockets(self) -> List[Tuple[str, int, str, int, str]]:
         """
         Extract active real network connections from host sockets without requiring root.
+        Filters sockets to match the active interface (physical Wi-Fi vs loopback).
         Returns list of (src_ip, src_port, dst_ip, dst_port, protocol).
         """
         flows = []
         host_ip = self._detect_host_ip()
 
-        # 1. Read /proc/net/tcp
+        # 1. Query ss -tun for live sockets (IPv4 + IPv6 without root)
         try:
-            if os.path.exists("/proc/net/tcp"):
-                with open("/proc/net/tcp", "r") as f:
-                    for line in f.readlines()[1:]:
-                        parts = line.strip().split()
-                        if len(parts) >= 4:
-                            lip = hex_to_ipv4(parts[1].split(":")[0])
-                            lport = int(parts[1].split(":")[1], 16)
-                            rip = hex_to_ipv4(parts[2].split(":")[0])
-                            rport = int(parts[2].split(":")[1], 16)
-                            state = parts[3]
-                            # Only include connected or transmitting sockets
-                            if rip != "0.0.0.0" and rip != "255.255.255.255":
-                                flows.append((lip, lport, rip, rport, "TCP"))
+            out = subprocess.check_output(["ss", "-tun"], text=True, stderr=subprocess.DEVNULL, timeout=0.5)
+            lines = out.strip().splitlines()
+            if len(lines) > 1:
+                for line in lines[1:]:
+                    parts = line.split()
+                    if len(parts) >= 6:
+                        proto = parts[0].upper()
+                        lip, lport = parse_ss_endpoint(parts[4])
+                        rip, rport = parse_ss_endpoint(parts[5])
+                        if rip in {"0.0.0.0", "255.255.255.255", "*", "::", ""}:
+                            continue
+                        
+                        # Interface-specific socket separation:
+                        if self.active_interface != "lo":
+                            # When monitoring physical Wi-Fi (wlp44s0), exclude internal localhost loopback traffic
+                            if lip in {"127.0.0.1", "::1"} or rip in {"127.0.0.1", "::1"}:
+                                continue
+                        else:
+                            # When specifically monitoring loopback lo, only include loopback sockets
+                            if lip not in {"127.0.0.1", "::1"} and rip not in {"127.0.0.1", "::1"}:
+                                continue
+
+                        flows.append((lip, lport, rip, rport, proto))
         except Exception:
             pass
 
-        # 2. Read /proc/net/udp
-        try:
-            if os.path.exists("/proc/net/udp"):
-                with open("/proc/net/udp", "r") as f:
-                    for line in f.readlines()[1:]:
-                        parts = line.strip().split()
-                        if len(parts) >= 4:
-                            lip = hex_to_ipv4(parts[1].split(":")[0])
-                            lport = int(parts[1].split(":")[1], 16)
-                            rip = hex_to_ipv4(parts[2].split(":")[0])
-                            rport = int(parts[2].split(":")[1], 16)
-                            if rip != "0.0.0.0" and rip != "255.255.255.255":
-                                flows.append((lip, lport, rip, rport, "UDP"))
-        except Exception:
-            pass
+        # 2. Fallback to /proc/net/tcp and /proc/net/udp
+        if not flows:
+            try:
+                if os.path.exists("/proc/net/tcp"):
+                    with open("/proc/net/tcp", "r") as f:
+                        for line in f.readlines()[1:]:
+                            parts = line.strip().split()
+                            if len(parts) >= 4:
+                                lip = hex_to_ipv4(parts[1].split(":")[0])
+                                lport = int(parts[1].split(":")[1], 16)
+                                rip = hex_to_ipv4(parts[2].split(":")[0])
+                                rport = int(parts[2].split(":")[1], 16)
+                                if rip not in {"0.0.0.0", "255.255.255.255"}:
+                                    if self.active_interface != "lo" and (lip == "127.0.0.1" or rip == "127.0.0.1"):
+                                        continue
+                                    flows.append((lip, lport, rip, rport, "TCP"))
+            except Exception:
+                pass
 
-        # If no external sockets open, add host-to-gateway / DNS heartbeat flow
+            try:
+                if os.path.exists("/proc/net/udp"):
+                    with open("/proc/net/udp", "r") as f:
+                        for line in f.readlines()[1:]:
+                            parts = line.strip().split()
+                            if len(parts) >= 4:
+                                lip = hex_to_ipv4(parts[1].split(":")[0])
+                                lport = int(parts[1].split(":")[1], 16)
+                                rip = hex_to_ipv4(parts[2].split(":")[0])
+                                rport = int(parts[2].split(":")[1], 16)
+                                if rip not in {"0.0.0.0", "255.255.255.255"}:
+                                    if self.active_interface != "lo" and (lip == "127.0.0.1" or rip == "127.0.0.1"):
+                                        continue
+                                    flows.append((lip, lport, rip, rport, "UDP"))
+            except Exception:
+                pass
+
+        # If no external sockets currently open, provide standard gateway / DNS connection
         if not flows:
             flows.append((host_ip, 54321, "10.196.92.120", 443, "TCP"))
             flows.append((host_ip, 49812, "8.8.8.8", 53, "UDP"))
 
         return flows
 
-    def create_real_network_flow_payload(self) -> NetworkFlowPayload:
+    def create_real_network_flow_payload(
+        self,
+        socket_tuple: Optional[Tuple[str, int, str, int, str]] = None,
+        override_stats: Optional[Tuple[int, int, float, float, bool]] = None,
+    ) -> NetworkFlowPayload:
         """
-        Assemble a genuine NetworkFlowPayload based on live host network activity on wlp44s0.
+        Assemble a genuine NetworkFlowPayload based on live host network activity on the active interface.
         """
-        sockets = self.sample_real_host_sockets()
-        chosen = self.rng.choice(sockets)
+        if socket_tuple is None:
+            sockets = self.sample_real_host_sockets()
+            chosen = self.rng.choice(sockets)
+        else:
+            chosen = socket_tuple
         src_ip, src_port, dst_ip, dst_port, proto = chosen
 
-        delta_bytes, delta_pkts, duration_sec, bps = self.read_interface_dev_stats()
+        if override_stats is not None:
+            delta_bytes, delta_pkts, duration_sec, bps, is_flood_surge = override_stats
+        else:
+            delta_bytes, delta_pkts, duration_sec, bps = self.read_interface_dev_stats()
+            pps = delta_pkts / max(0.001, duration_sec)
+            avg_size = delta_bytes / max(1, delta_pkts)
+            # A true network flood requires massive packet rate (>1000 pkts/s) with tiny dummy packets (<=64B)
+            is_flood_surge = pps >= 1000.0 and delta_pkts >= 400 and avg_size <= 64.0
+
         self.live_packets_count += delta_pkts
         pps = delta_pkts / max(0.001, duration_sec)
-
         duration_us = max(20000.0, duration_sec * 1_000_000.0)
 
-        # Detect active DoS / DDoS packet flood (sustained burst >= 70 pkts/s or bandwidth > 400KB/s)
-        is_flood_surge = (pps >= 70.0 and delta_pkts >= 30) or (bps >= 400_000.0)
-
         if is_flood_surge:
-            # Under live real DoS attack!
-            flood_pkts = max(int(delta_pkts), 160)
+            # Under genuine high-intensity packet flood attack!
+            flood_pkts = max(int(delta_pkts), 200)
             flood_bytes = max(float(delta_bytes), flood_pkts * 64.0)
             mean_len = min(1460.0, max(40.0, flood_bytes / max(1, flood_pkts)))
             target_port = dst_port if dst_port in [80, 443, 8000, 8080, 22, 53] else 8000
@@ -268,11 +321,11 @@ class TrafficSimulator:
                 avg_pkt_size=tot_bytes / max(1, fwd_pkts + bwd_pkts),
             )
         else:
-            # TCP Flow (HTTP, HTTPS, SSH, TLS)
-            fwd_pkts = int(self.rng.integers(4, 15))
-            bwd_pkts = int(self.rng.integers(4, 20))
-            fwd_len_mean = float(self.rng.uniform(120.0, 350.0))
-            bwd_len_mean = float(self.rng.uniform(250.0, 650.0))
+            # Standard legitimate TCP Flow (HTTP, HTTPS, SSH, TLS, API)
+            fwd_pkts = int(self.rng.integers(6, 18))
+            bwd_pkts = int(self.rng.integers(8, 25))
+            fwd_len_mean = float(self.rng.uniform(150.0, 450.0))
+            bwd_len_mean = float(self.rng.uniform(350.0, 950.0))
             tot_bytes = (fwd_pkts * fwd_len_mean) + (bwd_pkts * bwd_len_mean)
             return NetworkFlowPayload(
                 src_ip=src_ip,
@@ -296,9 +349,9 @@ class TrafficSimulator:
                 flow_iat_mean=duration_us / max(1, fwd_pkts + bwd_pkts - 1),
                 syn_flag_count=0,
                 ack_flag_count=1,
-                psh_flag_count=int(self.rng.choice([0, 1], p=[0.7, 0.3])),
-                init_win_bytes_forward=int(self.rng.choice([8192, 29200, 65535])),
-                init_win_bytes_backward=int(self.rng.choice([8192, 29200, 65535])),
+                psh_flag_count=int(self.rng.choice([0, 1], p=[0.6, 0.4])),
+                init_win_bytes_forward=int(self.rng.choice([29200, 65535])),
+                init_win_bytes_backward=int(self.rng.choice([29200, 65535])),
                 act_data_pkt_fwd=max(1, fwd_pkts - 2),
                 avg_pkt_size=tot_bytes / max(1, fwd_pkts + bwd_pkts),
             )
@@ -566,15 +619,38 @@ class TrafficSimulator:
             )
 
     async def _simulation_loop(self):
-        """Asynchronous worker that ingests live host flows or synthetic flows."""
+        """Asynchronous worker that ingests live host flows or synthetic flows in real time."""
         while self.is_running:
             try:
                 if self.mode == "LIVE_SNIFFER":
-                    # Sample actual live network sockets & traffic statistics from wlp44s0
-                    payload = self.create_real_network_flow_payload()
-                    result = engine.analyze_flow(payload)
-                    tot_bytes = payload.tot_len_fwd_pkts + payload.tot_len_bwd_pkts
-                    await store.add_flow_result(result, bytes_transferred=tot_bytes)
+                    # Sample actual live network sockets & traffic statistics from wlp44s0 / lo
+                    sockets = self.sample_real_host_sockets()
+                    delta_bytes, delta_pkts, duration_sec, bps = self.read_interface_dev_stats()
+                    pps = delta_pkts / max(0.001, duration_sec)
+                    avg_size = delta_bytes / max(1, delta_pkts)
+                    is_flood_surge = pps >= 1000.0 and delta_pkts >= 400 and avg_size <= 64.0
+
+                    if is_flood_surge:
+                        # Prioritize real flood flow
+                        payload = self.create_real_network_flow_payload(
+                            override_stats=(delta_bytes, delta_pkts, duration_sec, bps, True)
+                        )
+                        result = engine.analyze_flow(payload)
+                        tot_bytes = payload.tot_len_fwd_pkts + payload.tot_len_bwd_pkts
+                        await store.add_flow_result(result, bytes_transferred=tot_bytes)
+                    else:
+                        # Stream 1 or 2 active host connections per tick
+                        num_to_sample = min(2, len(sockets))
+                        sample_indices = self.rng.choice(len(sockets), size=num_to_sample, replace=False)
+                        for idx in sample_indices:
+                            s = sockets[idx]
+                            payload = self.create_real_network_flow_payload(
+                                socket_tuple=s,
+                                override_stats=(delta_bytes, delta_pkts, duration_sec, bps, False),
+                            )
+                            result = engine.analyze_flow(payload)
+                            tot_bytes = payload.tot_len_fwd_pkts + payload.tot_len_bwd_pkts
+                            await store.add_flow_result(result, bytes_transferred=tot_bytes)
                 else:
                     # Synthetic simulator mode
                     payload = self.create_simulated_payload()

@@ -48,6 +48,20 @@ class AlertStore:
     async def register_websocket(self, websocket: WebSocket):
         await websocket.accept()
         self.active_websockets.add(websocket)
+        try:
+            init_message = {
+                "type": "INITIAL_STATE",
+                "data": {
+                    "metrics": self.get_overview_metrics().model_dump(),
+                    "alerts": [a.model_dump() for a in self.get_alerts(limit=50)],
+                    "traffic_point": self.time_series_history[-1].model_dump() if self.time_series_history else None,
+                    "recent_flows": self.get_recent_flows(30),
+                },
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            await websocket.send_json(init_message)
+        except Exception:
+            pass
 
     def unregister_websocket(self, websocket: WebSocket):
         self.active_websockets.discard(websocket)
@@ -114,15 +128,48 @@ class AlertStore:
             )
             self.time_series_history.append(new_pt)
 
-        # Broadcast live flow
-        await self.broadcast_event("FLOW_INGESTED", {
+        # Broadcast live flow with full network connection metadata
+        flow_payload = {
             "flow_id": result.flow_id,
+            "timestamp": result.timestamp,
             "classification": result.classification,
             "is_malicious": result.is_malicious,
             "confidence": result.confidence_score,
             "severity": result.severity,
             "color": result.color,
-        })
+            "src_ip": result.src_ip or "127.0.0.1",
+            "dst_ip": result.dst_ip or "127.0.0.1",
+            "src_port": result.src_port or 0,
+            "dst_port": result.dst_port or 0,
+            "protocol": result.protocol or "TCP",
+            "bytes": result.bytes or bytes_transferred,
+            "packets": result.packets or 1,
+        }
+        await self.broadcast_event("FLOW_INGESTED", flow_payload)
+
+    def get_recent_flows(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Return newest analyzed flows for real-time traffic view."""
+        recent = list(self.flows)[-limit:]
+        recent.reverse()
+        return [
+            {
+                "flow_id": r.flow_id,
+                "timestamp": r.timestamp,
+                "classification": r.classification,
+                "is_malicious": r.is_malicious,
+                "confidence": r.confidence_score,
+                "severity": r.severity,
+                "color": r.color,
+                "src_ip": r.src_ip or "127.0.0.1",
+                "dst_ip": r.dst_ip or "127.0.0.1",
+                "src_port": r.src_port or 0,
+                "dst_port": r.dst_port or 0,
+                "protocol": r.protocol or "TCP",
+                "bytes": r.bytes or 0.0,
+                "packets": r.packets or 1,
+            }
+            for r in recent
+        ]
 
     def get_alerts(
         self,

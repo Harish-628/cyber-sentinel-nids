@@ -93,6 +93,13 @@ class FlowAnalysisResponse(BaseModel):
     severity: str
     color: str
     alert: Optional[SecurityAlert] = None
+    src_ip: Optional[str] = None
+    dst_ip: Optional[str] = None
+    src_port: Optional[int] = None
+    dst_port: Optional[int] = None
+    protocol: Optional[str] = None
+    bytes: Optional[float] = None
+    packets: Optional[int] = None
 
 
 class BatchFlowPayload(BaseModel):

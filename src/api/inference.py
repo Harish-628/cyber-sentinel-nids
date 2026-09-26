@@ -170,7 +170,7 @@ class NIDSInferenceEngine:
                 best_atk_idx = int(np.argmax(attack_sub_probs)) + 1
                 pred_idx = best_atk_idx
                 classification = self.class_mapping.get(pred_idx, "UNKNOWN")
-                confidence = float(probabilities[pred_idx])
+                confidence = float(attack_prob)
                 is_malicious = True
             else:
                 pred_idx = 0
@@ -229,6 +229,9 @@ class NIDSInferenceEngine:
                 },
             )
 
+        tot_bytes = float(payload.tot_len_fwd_pkts + payload.tot_len_bwd_pkts)
+        tot_pkts = int(payload.tot_fwd_pkts + payload.tot_bwd_pkts)
+
         return FlowAnalysisResponse(
             flow_id=flow_id,
             timestamp=ts,
@@ -238,6 +241,13 @@ class NIDSInferenceEngine:
             severity=meta["severity"],
             color=meta["color"],
             alert=alert,
+            src_ip=payload.src_ip,
+            dst_ip=payload.dst_ip,
+            src_port=payload.src_port,
+            dst_port=payload.dst_port,
+            protocol=payload.protocol.upper(),
+            bytes=round(tot_bytes, 1),
+            packets=max(1, tot_pkts),
         )
 
 

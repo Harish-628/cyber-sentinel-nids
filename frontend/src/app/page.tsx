@@ -12,6 +12,7 @@ import {
 import {
   NetworkInterface,
   OverviewMetrics,
+  RealtimeFlowLog,
   SecurityAlert,
   SimulatorStatus,
   TrafficModeInfo,
@@ -38,6 +39,7 @@ export default function Home() {
   const [selectedAlert, setSelectedAlert] = useState<SecurityAlert | null>(null);
   const [isWsConnected, setIsWsConnected] = useState<boolean>(false);
   const [toastAlert, setToastAlert] = useState<SecurityAlert | null>(null);
+  const [liveFlows, setLiveFlows] = useState<RealtimeFlowLog[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Sync state from REST API
@@ -96,6 +98,14 @@ export default function Home() {
             }
             if (data.alerts && Array.isArray(data.alerts)) {
               setAlerts(data.alerts);
+            }
+            if (data.recent_flows && Array.isArray(data.recent_flows)) {
+              setLiveFlows(data.recent_flows);
+            }
+          } else if (payload.type === "FLOW_INGESTED") {
+            const flow: RealtimeFlowLog = payload.data;
+            if (flow && flow.flow_id) {
+              setLiveFlows((prev) => [flow, ...prev.slice(0, 99)]);
             }
           } else if (payload.type === "NEW_ALERT") {
             const newAlert: SecurityAlert | undefined = payload.data || payload.alert;
@@ -227,7 +237,7 @@ export default function Home() {
             />
           )}
 
-          {currentTab === "traffic" && <TrafficAnalysisView />}
+          {currentTab === "traffic" && <TrafficAnalysisView liveFlows={liveFlows} />}
 
           {currentTab === "tester" && <FlowTesterView />}
 

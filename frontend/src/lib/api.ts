@@ -1,4 +1,4 @@
-import { DeepDiveMetrics, OverviewMetrics, SecurityAlert, SimulatorStatus, TrafficPoint } from "./types";
+import { DeepDiveMetrics, OverviewMetrics, RealtimeFlowLog, SecurityAlert, SimulatorStatus, TrafficPoint } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
@@ -110,6 +110,12 @@ export async function clearAllAlerts(): Promise<any> {
     method: "POST",
   });
   if (!res.ok) throw new Error("Failed to clear alerts");
+  return res.json();
+}
+
+export async function fetchLiveFlows(limit: number = 50): Promise<RealtimeFlowLog[]> {
+  const res = await fetch(`${API_BASE}/traffic/live-flows?limit=${limit}`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch live flows");
   return res.json();
 }
 

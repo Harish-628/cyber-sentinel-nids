@@ -101,6 +101,12 @@ async def get_traffic_history():
     return store.get_time_series()
 
 
+@router.get("/live-flows")
+async def get_live_flows(limit: int = 50) -> List[Dict[str, Any]]:
+    """Return latest analyzed real-time network flows."""
+    return store.get_recent_flows(limit=limit)
+
+
 @router.get("/deep-dive")
 async def get_traffic_deep_dive() -> Dict[str, Any]:
     """
@@ -118,19 +124,14 @@ async def get_traffic_deep_dive() -> Dict[str, Any]:
     total_packets = 0
 
     for f in recent_flows:
-        # Aggregate from alert or estimated
-        if f.alert:
-            proto = f.alert.protocol
-            protocols[proto] = protocols.get(proto, 0) + 1
-            dst_p = f.alert.destination_port
-            ports[dst_p] = ports.get(dst_p, 0) + 1
-            total_packets += f.alert.flow_summary.get("total_packets", 1)
-            total_bytes += f.alert.flow_summary.get("bytes_transferred", 1000.0)
-        else:
-            protocols["TCP"] = protocols.get("TCP", 0) + 1
-            ports[443] = ports.get(443, 0) + 1
-            total_packets += 18
-            total_bytes += 8500.0
+        proto = (f.protocol or (f.alert.protocol if f.alert else "TCP")).upper()
+        protocols[proto] = protocols.get(proto, 0) + 1
+        dst_p = f.dst_port or (f.alert.destination_port if f.alert else 443)
+        ports[dst_p] = ports.get(dst_p, 0) + 1
+        pkt_cnt = f.packets or (f.alert.flow_summary.get("total_packets", 1) if f.alert else 1)
+        byte_cnt = f.bytes or (f.alert.flow_summary.get("bytes_transferred", 1000.0) if f.alert else 500.0)
+        total_packets += pkt_cnt
+        total_bytes += byte_cnt
 
     top_ports = sorted([{"port": p, "count": c} for p, c in ports.items()], key=lambda x: x["count"], reverse=True)[:8]
 
